@@ -92,10 +92,16 @@ function buildGeminiContents(
 ): MessageHistory[] {
   const contents: MessageHistory[] = [];
 
-  // Lọc lấy các tin nhắn có nội dung hợp lệ
-  const validHistory = history.filter(
-    (h) => h.content && typeof h.content === 'string' && h.content.trim().length > 0
-  );
+  // Lọc bỏ các thông báo lỗi và tin nhắn hệ thống khỏi lịch sử gửi lên Google
+  const validHistory = history.filter((h) => {
+    if (!h.content || typeof h.content !== 'string') return false;
+    const text = h.content.trim();
+    if (text.length === 0) return false;
+    if (text.includes('⚠️ Google Gemini thông báo:')) return false;
+    if (text.includes('🔑 Kích hoạt Gemini 1.5')) return false;
+    if (text.includes('Chào bạn! Tôi là Trợ lý')) return false;
+    return true;
+  });
 
   for (const item of validHistory) {
     const role: 'user' | 'model' =
@@ -159,82 +165,54 @@ export async function streamGeminiAI(
     } catch {}
   }
 
-  // 3. GỌI GOOGLE GEMINI 1.5 FLASH CHÍNH HÃNG VỚI MULTI-TURN CHUẨN
+  // 3. GỌI GOOGLE GEMINI CHÍNH HÃNG VỚI MULTI-TURN CHUẨN
   if (apiKey && apiKey.length > 15 && apiKey !== 'your-gemini-api-key-here') {
     try {
       const contents = buildGeminiContents(history, cleanPrompt);
 
-      // Thử gọi Streaming API trước
-      const streamUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=${apiKey}&alt=sse`;
+      // Thử các model phổ biến nhất của Google: gemini-1.5-flash-latest, gemini-1.5-flash, gemini-pro, gemini-1.5-pro
+      const modelCandidates = [
+        'gemini-1.5-flash-latest',
+        'gemini-1.5-flash',
+        'gemini-pro',
+        'gemini-1.5-pro-latest'
+      ];
 
-      const response = await fetch(streamUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 3000,
-          },
-        }),
-      });
+      for (const modelName of modelCandidates) {
+        try {
+          const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+          const directRes = await fetch(directUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents,
+              generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 3000,
+              },
+            }),
+          });
 
-      if (response.ok) {
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder('utf-8');
-        let fullResponse = '';
-
-        if (reader) {
-          while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-
-            const chunkText = decoder.decode(value, { stream: true });
-            const lines = chunkText.split('\n');
-
-            for (const line of lines) {
-              if (line.startsWith('data: ')) {
-                const dataStr = line.replace('data: ', '').trim();
-                if (dataStr === '[DONE]') continue;
-                try {
-                  const parsed = JSON.parse(dataStr);
-                  const text = parsed?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                  if (text) {
-                    fullResponse += text;
-                    onChunk(fullResponse);
-                  }
-                } catch {}
-              }
+          if (directRes.ok) {
+            const directData = await directRes.json();
+            const text = directData?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text && text.trim().length > 0) {
+              return await streamTextGradually(text.trim(), onChunk, 6);
+            }
+          } else {
+            const errData = await directRes.json().catch(() => ({}));
+            // Nếu lỗi là 404 not found model, thử model tiếp theo trong danh sách
+            if (directRes.status === 404 || errData?.error?.message?.includes('not found')) {
+              continue;
+            }
+            if (errData?.error?.message) {
+              const errNotice = `⚠️ Google Gemini thông báo: ${errData.error.message}\n\nVui lòng kiểm tra lại mã API Key của bạn bằng cách bấm vào nút "Cài đặt Gemini Key" ở góc trên bên phải.`;
+              onChunk(errNotice);
+              return errNotice;
             }
           }
-        }
-
-        if (fullResponse.trim()) {
-          return fullResponse;
-        }
-      }
-
-      // Fallback: Nếu stream gặp lỗi hoặc proxy chặn SSE, gọi trực tiếp standard endpoint
-      const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-      const directRes = await fetch(directUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents }),
-      });
-
-      if (directRes.ok) {
-        const directData = await directRes.json();
-        const text = directData?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text && text.trim().length > 0) {
-          return await streamTextGradually(text.trim(), onChunk, 6);
-        }
-      } else {
-        const errData = await directRes.json().catch(() => ({}));
-        console.warn('Gemini API Error details:', errData);
-        if (errData?.error?.message) {
-          const errNotice = `⚠️ Google Gemini thông báo: ${errData.error.message}\n\nVui lòng kiểm tra lại mã API Key của bạn bằng cách bấm vào nút "Cài đặt Gemini Key" ở góc trên bên phải.`;
-          onChunk(errNotice);
-          return errNotice;
+        } catch (callErr) {
+          console.warn(`Lỗi khi gọi model ${modelName}:`, callErr);
         }
       }
     } catch (geminiErr: any) {
