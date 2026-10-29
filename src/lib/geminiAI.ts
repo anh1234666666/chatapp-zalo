@@ -174,9 +174,13 @@ export async function streamGeminiAI(
       const modelCandidates = [
         'gemini-1.5-flash-latest',
         'gemini-1.5-flash',
+        'gemini-2.0-flash-exp',
         'gemini-pro',
-        'gemini-1.5-pro-latest'
+        'gemini-1.5-pro-latest',
+        'gemini-1.5-pro'
       ];
+
+      let lastErrorMessage = '';
 
       for (const modelName of modelCandidates) {
         try {
@@ -201,19 +205,20 @@ export async function streamGeminiAI(
             }
           } else {
             const errData = await directRes.json().catch(() => ({}));
-            // Nếu lỗi là 404 not found model, thử model tiếp theo trong danh sách
-            if (directRes.status === 404 || errData?.error?.message?.includes('not found')) {
-              continue;
-            }
-            if (errData?.error?.message) {
-              const errNotice = `⚠️ Google Gemini thông báo: ${errData.error.message}\n\nVui lòng kiểm tra lại mã API Key của bạn bằng cách bấm vào nút "Cài đặt Gemini Key" ở góc trên bên phải.`;
-              onChunk(errNotice);
-              return errNotice;
-            }
+            lastErrorMessage = errData?.error?.message || `HTTP ${directRes.status}`;
+            console.warn(`Model ${modelName} returned error:`, lastErrorMessage);
           }
-        } catch (callErr) {
+        } catch (callErr: any) {
+          lastErrorMessage = callErr?.message || 'Network error';
           console.warn(`Lỗi khi gọi model ${modelName}:`, callErr);
         }
+      }
+
+      // Nếu đã có API Key mà tất cả model đều bị từ chối, hiển thị thẳng lỗi từ Google
+      if (lastErrorMessage) {
+        const errNotice = `⚠️ Google Gemini phản hồi: ${lastErrorMessage}\n\n(Vui lòng kiểm tra lại mã API Key của bạn hoặc tạo một khóa mới tại Google AI Studio).`;
+        onChunk(errNotice);
+        return errNotice;
       }
     } catch (geminiErr: any) {
       console.error('Lỗi kết nối Gemini API:', geminiErr);
