@@ -170,54 +170,50 @@ export async function streamGeminiAI(
     try {
       const contents = buildGeminiContents(history, cleanPrompt);
 
-      // Bước 1: Hỏi Google xem API Key này hỗ trợ chính xác những model nào
-      let targetModels: string[] = [];
-      try {
-        const listRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
-        );
-        if (listRes.ok) {
-          const listData = await listRes.json();
-          if (Array.isArray(listData?.models)) {
-            targetModels = listData.models
-              .filter((m: any) =>
-                m.supportedGenerationMethods?.includes('generateContent')
-              )
-              .map((m: any) => m.name.replace(/^models\//, ''));
-          }
-        }
-      } catch (e) {
-        console.warn('Lỗi lấy danh sách model:', e);
-      }
+      // Thêm system instruction chỉ định ngôn ngữ Tiếng Việt tự nhiên, thân thiện
+      const systemInstruction = {
+        parts: [
+          {
+            text: 'Bạn là Trợ lý Trí Tuệ Nhân Tạo (Gemini AI) trong ứng dụng Chat App. Hãy luôn trả lời trực tiếp, thông minh, chi tiết và hoàn toàn bằng Tiếng Việt chuẩn mực, rõ ràng, dễ hiểu và thân thiện. Không được trả về suy nghĩ nội bộ hay tiếng Anh trừ khi người dùng yêu cầu.',
+          },
+        ],
+      };
 
-      // Danh sách dự phòng nếu không lấy được list
-      const fallbackModels = [
+      // Danh sách model ưu tiên có tốc độ phản hồi cực nhanh (dưới 1 giây)
+      const modelCandidates = [
         'gemini-1.5-flash-latest',
         'gemini-1.5-flash',
         'gemini-2.0-flash-exp',
-        'gemini-pro',
-        'gemini-1.0-pro',
         'gemini-1.5-pro-latest',
         'gemini-1.5-pro',
+        'gemini-pro',
       ];
 
-      const modelCandidates = targetModels.length > 0 ? targetModels : fallbackModels;
       let lastErrorMessage = '';
 
       for (const modelName of modelCandidates) {
         try {
           const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+          
+          // Thêm timeout 12 giây để không bao giờ bị tình trạng xoay hoài
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 12000);
+
           const directRes = await fetch(directUrl, {
             method: 'POST',
+            signal: controller.signal,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              systemInstruction,
               contents,
               generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 3000,
+                maxOutputTokens: 2048,
               },
             }),
           });
+
+          clearTimeout(timeoutId);
 
           if (directRes.ok) {
             const directData = await directRes.json();
@@ -231,14 +227,14 @@ export async function streamGeminiAI(
             console.warn(`Model ${modelName} returned error:`, lastErrorMessage);
           }
         } catch (callErr: any) {
-          lastErrorMessage = callErr?.message || 'Network error';
+          lastErrorMessage = callErr?.name === 'AbortError' ? 'Thời gian phản hồi quá lâu' : (callErr?.message || 'Network error');
           console.warn(`Lỗi khi gọi model ${modelName}:`, callErr);
         }
       }
 
       // Nếu đã có API Key mà tất cả model đều bị từ chối, hiển thị thẳng lỗi từ Google
       if (lastErrorMessage) {
-        const errNotice = `⚠️ Google Gemini phản hồi: ${lastErrorMessage}\n\n(Vui lòng kiểm tra lại mã API Key của bạn hoặc tạo một khóa mới tại Google AI Studio).`;
+        const errNotice = `⚠️ Google Gemini phản hồi: ${lastErrorMessage}\n\n(Vui lòng kiểm tra lại kết nối mạng hoặc thử lại câu hỏi).`;
         onChunk(errNotice);
         return errNotice;
       }
