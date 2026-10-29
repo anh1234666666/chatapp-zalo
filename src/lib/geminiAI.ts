@@ -170,32 +170,56 @@ export async function streamGeminiAI(
     try {
       const contents = buildGeminiContents(history, cleanPrompt);
 
-      // Thêm system instruction chỉ định ngôn ngữ Tiếng Việt tự nhiên, thân thiện
-      const systemInstruction = {
-        parts: [
-          {
-            text: 'Bạn là Trợ lý Trí Tuệ Nhân Tạo (Gemini AI) trong ứng dụng Chat App. Hãy luôn trả lời trực tiếp, thông minh, chi tiết và hoàn toàn bằng Tiếng Việt chuẩn mực, rõ ràng, dễ hiểu và thân thiện. Không được trả về suy nghĩ nội bộ hay tiếng Anh trừ khi người dùng yêu cầu.',
-          },
-        ],
-      };
+      // Thêm yêu cầu rõ ràng ngay trong nội dung gửi đi: Luôn trả lời tiếng Việt thân thiện, không trả về suy nghĩ nội bộ
+      const finalContents = contents.map((c, idx) => {
+        if (idx === contents.length - 1 && c.role === 'user') {
+          return {
+            ...c,
+            parts: [
+              {
+                text: `${c.parts[0]?.text || ''}\n\n[Yêu cầu bắt buộc: Bạn là Trợ lý AI của Chat App. Hãy trả lời trực tiếp, đầy đủ và hoàn toàn bằng Tiếng Việt thân thiện, rõ ràng, dễ hiểu. Không trả về tiếng Anh hay ghi chú suy nghĩ].`,
+              },
+            ],
+          };
+        }
+        return c;
+      });
 
-      // Danh sách model ưu tiên có tốc độ phản hồi cực nhanh (dưới 1 giây)
-      const modelCandidates = [
-        'gemini-1.5-flash-latest',
-        'gemini-1.5-flash',
-        'gemini-2.0-flash-exp',
-        'gemini-1.5-pro-latest',
-        'gemini-1.5-pro',
-        'gemini-pro',
-      ];
+      // BƯỚC QUAN TRỌNG: Lấy đúng danh sách model đang HOẠT ĐỘNG của chính API Key này
+      let availableModels: string[] = [];
+      try {
+        const listRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
+        );
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          if (Array.isArray(listData?.models)) {
+            availableModels = listData.models
+              .filter((m: any) =>
+                Array.isArray(m.supportedGenerationMethods) &&
+                m.supportedGenerationMethods.includes('generateContent')
+              )
+              .map((m: any) => String(m.name).replace(/^models\//, ''));
+          }
+        }
+      } catch (e) {
+        console.warn('Lỗi khi list models:', e);
+      }
+
+      // Ưu tiên các model flash nếu có trong danh sách
+      const preferred = availableModels.filter(m => m.includes('flash'));
+      const other = availableModels.filter(m => !m.includes('flash'));
+      const candidateList = [...preferred, ...other];
+
+      // Nếu không lấy được list, dùng danh sách fallback
+      const modelsToTry = candidateList.length > 0 ? candidateList : ['gemini-1.5-flash', 'gemini-1.5-flash-latest'];
 
       let lastErrorMessage = '';
 
-      for (const modelName of modelCandidates) {
+      for (const modelName of modelsToTry) {
         try {
           const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
           
-          // Thêm timeout 12 giây để không bao giờ bị tình trạng xoay hoài
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 12000);
 
@@ -204,8 +228,7 @@ export async function streamGeminiAI(
             signal: controller.signal,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              systemInstruction,
-              contents,
+              contents: finalContents,
               generationConfig: {
                 temperature: 0.7,
                 maxOutputTokens: 2048,
