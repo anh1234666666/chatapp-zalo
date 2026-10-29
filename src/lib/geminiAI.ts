@@ -170,16 +170,38 @@ export async function streamGeminiAI(
     try {
       const contents = buildGeminiContents(history, cleanPrompt);
 
-      // Thử các model phổ biến nhất của Google: gemini-1.5-flash-latest, gemini-1.5-flash, gemini-pro, gemini-1.5-pro
-      const modelCandidates = [
+      // Bước 1: Hỏi Google xem API Key này hỗ trợ chính xác những model nào
+      let targetModels: string[] = [];
+      try {
+        const listRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`
+        );
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          if (Array.isArray(listData?.models)) {
+            targetModels = listData.models
+              .filter((m: any) =>
+                m.supportedGenerationMethods?.includes('generateContent')
+              )
+              .map((m: any) => m.name.replace(/^models\//, ''));
+          }
+        }
+      } catch (e) {
+        console.warn('Lỗi lấy danh sách model:', e);
+      }
+
+      // Danh sách dự phòng nếu không lấy được list
+      const fallbackModels = [
         'gemini-1.5-flash-latest',
         'gemini-1.5-flash',
         'gemini-2.0-flash-exp',
         'gemini-pro',
+        'gemini-1.0-pro',
         'gemini-1.5-pro-latest',
-        'gemini-1.5-pro'
+        'gemini-1.5-pro',
       ];
 
+      const modelCandidates = targetModels.length > 0 ? targetModels : fallbackModels;
       let lastErrorMessage = '';
 
       for (const modelName of modelCandidates) {
