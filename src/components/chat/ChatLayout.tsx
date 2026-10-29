@@ -664,6 +664,45 @@ export const ChatLayout: React.FC = () => {
       {/* ====== MAIN CONTENT: Toàn màn hình mobile, flex-1 desktop ====== */}
       <div className="flex-1 flex flex-col h-full overflow-hidden w-full relative">
 
+        {/* Floating Notification trực tiếp khi nhận được lời mời kết bạn mới */}
+        {receivedRequests.length > 0 && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-50 max-w-md w-[94%] sm:w-auto bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600 text-white rounded-2xl shadow-2xl p-3 sm:px-4 sm:py-3 flex items-center justify-between gap-3 animate-fade-in border border-white/30 backdrop-blur-md">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <img
+                src={receivedRequests[0].sender?.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=user`}
+                className="w-10 h-10 rounded-full object-cover shrink-0 border-2 border-white/40 shadow-sm"
+                alt="Avatar"
+              />
+              <div className="min-w-0">
+                <p className="text-[11px] text-blue-200 font-semibold flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                  <span>Lời mời kết bạn mới</span>
+                </p>
+                <h5 className="text-xs sm:text-sm font-bold truncate">
+                  {receivedRequests[0].sender?.display_name || 'Người dùng'}
+                </h5>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={() => handleAcceptRequest(receivedRequests[0].id)}
+                className="px-3.5 py-1.5 rounded-xl bg-white text-blue-600 hover:bg-blue-50 font-bold text-xs shadow-md transition-transform active:scale-95"
+              >
+                Đồng ý ngay
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('contacts');
+                  setMobileViewingChat(false);
+                }}
+                className="px-2.5 py-1.5 rounded-xl bg-white/20 hover:bg-white/30 text-white font-medium text-xs transition-colors"
+              >
+                Xem ({receivedRequests.length})
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* === NỘI DUNG CHÍNH (không tính bottom bar) === */}
         <div className="flex-1 flex overflow-hidden min-h-0">
 

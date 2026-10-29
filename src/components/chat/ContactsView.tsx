@@ -331,6 +331,30 @@ export const ContactsView: React.FC<ContactsViewProps> = ({
       {/* 3. KHU VỰC NỘI DUNG CHÍNH (Đồng đều cả Mobile và Desktop) */}
       <div className="flex-1 flex flex-col p-4 sm:p-6 overflow-y-auto w-full">
         
+        {/* Banner thông báo Lời mời kết bạn nổi bật ngay đầu trang Contacts */}
+        {receivedRequests.length > 0 && subTab !== 'received' && (
+          <div
+            onClick={() => setSubTab('received')}
+            className="mb-4 p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md flex items-center justify-between cursor-pointer hover:shadow-lg transition-all animate-fade-in"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                <UserPlus className="w-5 h-5 text-white animate-bounce" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm sm:text-base flex items-center gap-2">
+                  <span>Bạn có {receivedRequests.length} lời mời kết bạn mới!</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+                </h4>
+                <p className="text-xs text-blue-100">Bấm vào đây để xem và đồng ý kết bạn ngay</p>
+              </div>
+            </div>
+            <button className="px-3.5 py-1.5 rounded-xl bg-white text-blue-600 font-bold text-xs shadow-sm hover:bg-blue-50 transition-colors shrink-0">
+              Xem ngay ({receivedRequests.length})
+            </button>
+          </div>
+        )}
+        
         {/* SUBTAB 1: BẠN BÈ */}
         {subTab === 'friends' && (
           <div className="space-y-4 max-w-4xl w-full">

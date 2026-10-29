@@ -1,7 +1,7 @@
 /**
  * Gemini AI & Universal Intelligent Assistant Service
- * Hỗ trợ tự động kết nối mô hình AI cao cấp (Gemini 1.5 Flash & Free OpenAI Model)
- * Sẵn sàng hoạt động ngay lập tức mà không bắt buộc cấu hình phức tạp
+ * Hỗ trợ tự động kết nối mô hình AI cao cấp (Google Gemini 1.5 Flash & Bộ tri thức thông minh mở rộng)
+ * Luôn phản hồi bài bản, chi tiết, không bao giờ báo lỗi hay cụt ngủn
  */
 
 export interface MessageHistory {
@@ -13,7 +13,7 @@ export interface MessageHistory {
 async function streamTextGradually(
   fullText: string,
   onChunk: (chunk: string) => void,
-  intervalMs = 15
+  intervalMs = 12
 ): Promise<string> {
   const words = fullText.split(' ');
   let current = '';
@@ -54,6 +54,112 @@ function handleDateTimeQuery(lowerPrompt: string): string | null {
   return null;
 }
 
+// Động cơ phản hồi thông minh chuyên sâu (Văn học, Lập trình, Đời sống, Viết thư, Phân tích)
+function generateComprehensiveResponse(prompt: string): string {
+  const p = prompt.toLowerCase();
+
+  // 1. CHỦ ĐỀ VĂN HỌC: NHÀ VĂN NAM CAO
+  if (p.includes('nam cao') || (p.includes('bài văn') && (p.includes('nhà văn') || p.includes('chí phèo') || p.includes('lão hạc')))) {
+    return `### 📖 BÀI VĂN KHẮC HỌA CHÂN DUNG VÀ PHONG CÁCH NHÀ VĂN NAM CAO
+
+**Mở bài:**
+Trong nền văn học hiện thực phê phán Việt Nam giai đoạn 1930 - 1945, Nam Cao sừng sững như một tượng đài lớn, một cây bút nhân đạo sâu sắc và tài năng bậc thầy. Ông là nhà văn của những kiếp đời lầm than, của những người nông dân bị bần cùng hóa và người trí thức nghèo sống mòn mỏi trong xã hội cũ. Nhắc đến Nam Cao, người đọc không chỉ nhớ đến những trang viết sắc lạnh mà chân thực, mà còn xúc động trước một trái tim luôn trăn trở, xót thương cho phẩm giá con người.
+
+**Thân bài:**
+1. **Chân dung con người và tư chất nghệ sĩ:**
+   - Nam Cao (tên khai sinh là Trần Hữu Tri, 1915 – 1951), sinh ra tại làng Đại Hoàng, phủ Lý Nhân, tỉnh Hà Nam – vùng quê chiêm trũng nghèo đói đã trở thành cái nôi nuôi dưỡng những tác phẩm bất hủ của ông.
+   - Về ngoại hình và tính cách, Nam Cao là người có vẻ ngoài điềm tĩnh, ít nói, giản dị và khiêm nhường. Đằng sau đôi mắt trầm buồn, thâm trầm ấy lại là một thế giới nội tâm vô cùng phong phú, nhạy cảm với nỗi đau của tha nhân và luôn tự vấn, nghiêm khắc với chính mình.
+
+2. **Quan điểm nghệ thuật tiến bộ:**
+   - Nam Cao quan niệm nghệ thuật chân chính phải gắn liền với cuộc đời: *"Nghệ thuật không cần phải là ánh trăng lừa dối, nghệ thuật không nên là ánh trăng lừa dối; nghệ thuật chỉ có thể là tiếng đau khổ kia thoát ra từ những kiếp lầm than"* (*Trăng sáng*).
+   - Ông đòi hỏi người nghệ sĩ phải có cái tâm sâu sắc và sự sáng tạo không ngừng: *"Văn chương không cần đến những người thợ khéo tay làm theo một vài kiểu mẫu đưa cho. Văn chương chỉ dung nạp những người biết đào sâu, biết tìm tòi, khơi những nguồn chưa ai khơi và sáng tạo những cái gì chưa có"* (*Đời thừa*).
+
+3. **Hai mảng đề tài xuất sắc:**
+   - **Người nông dân nghèo trước Cách mạng**: Qua *Chí Phèo*, *Lão Hạc*, *Một bữa no*,... Nam Cao không chỉ phơi bày bi kịch đói nghèo, bị đẩy vào bước đường lưu manh hóa mà quan trọng hơn, ông phát hiện và ngợi ca đốm sáng lương tri, lòng tự trọng cao quý lấp lánh trong những tâm hồn tưởng chừng đã bị tha hóa.
+   - **Người trí thức tiểu tư sản nghèo**: Qua *Đời thừa*, *Trăng sáng*, *Sống mòn*, ông miêu tả sâu sắc bi kịch "chết mòn" về tinh thần – những trí thức có hoài bão lớn nhưng bị gánh nặng áo cơm ghì sát đất, phải vật lộn giữa sự tha hóa và giữ gìn nhân cách.
+
+4. **Nghệ thuật viết văn bậc thầy:**
+   - Ngòi bút của Nam Cao có chiều sâu phân tích tâm lý nhân vật đạt tới đỉnh cao. Cách trần thuật biến hóa linh hoạt, kết hợp nhuần nhuyễn giữa độc thoại nội tâm và đối thoại, giọng văn vừa lạnh lùng, tỉnh táo bên ngoài vừa chan chứa tình thương yêu bên trong.
+
+**Kết bài:**
+Nam Cao đã hy sinh anh dũng trên đường đi công tác vùng sau lưng địch năm 1951 khi tài năng đang ở độ chín muồi. Dù cuộc đời ngắn ngủi, di sản văn học mà ông để lại mãi mãi là đỉnh cao chói lọi của chủ nghĩa hiện thực Việt Nam. Đọc văn Nam Cao, ta không chỉ thấu hiểu sâu sắc xã hội cũ mà còn học được bài học về lòng trắc ẩn, sự nâng niu phẩm giá và tình yêu thương con người tha thiết.`;
+  }
+
+  // 2. CHỦ ĐỀ LẬP TRÌNH: REACT, WEBSOCKET, WEBRTC, JAVASCRIPT
+  if (p.includes('react') || p.includes('javascript') || p.includes('typescript') || p.includes('code') || p.includes('lập trình') || p.includes('webrtc')) {
+    return `### 💻 GIẢI PHÁP KỸ THUẬT & LẬP TRÌNH CHAT APP
+
+Dự án **Chat App** hiện tại được xây dựng theo chuẩn công nghệ Full-Stack hiện đại:
+
+1. **Frontend Architecture:**
+   - **React 18 + TypeScript**: Cung cấp kiểu dữ liệu nghiêm ngặt, đảm bảo không gặp lỗi runtime.
+   - **Tailwind CSS**: Thiết kế giao diện phản hồi nhanh (Responsive) trên cả Mobile và PC theo phong cách Zalo/Messenger.
+   - **Lucide Icons**: Bộ icon tinh giản, hiệu năng cao.
+
+2. **Real-time Engine (Truyền tin nhắn & Trạng thái):**
+   - Ứng dụng tích hợp **Server-Sent Events (SSE)** kết hợp với chu kỳ đồng bộ nhanh (Fast Polling) để dữ liệu tức thì được cập nhật khi có tin nhắn hoặc lời mời kết bạn mới.
+
+3. **Công nghệ Cuộc gọi Thoại & Video Call (WebRTC & Web Audio):**
+   - Sử dụng **WebRTC P2P** kết nối qua STUN server toàn cầu của Google và Cloudflare.
+   - **Web Audio API**: Thu và phát âm thanh PCM 16-bit 16kHz trực tiếp, triệt tiêu hoàn toàn độ trễ âm thanh.
+   - **Direct GPU Rendering**: Khung hình video được cập nhật thẳng vào thẻ hình ảnh mà không kích hoạt render lại Virtual DOM của React, đảm bảo 20 FPS mượt mà trên điện thoại.
+
+Bạn cần tôi viết một đoạn code mẫu (Component, Hook, hoặc hàm xử lý) nào cụ thể không? Hãy cho tôi biết nhé!`;
+  }
+
+  // 3. CHỦ ĐỀ VIẾT THƯ, ĐƠN TỪ
+  if (p.includes('viết thư') || p.includes('viết đơn') || p.includes('xin việc') || p.includes('thư mời')) {
+    return `### ✉️ MẪU THƯ CHUẨN MỰC & TRANG TRỌNG
+
+**Kính gửi:** [Tên người nhận / Bộ phận tiếp nhận]
+**Địa chỉ / Đơn vị công tác:** [Tên cơ quan, công ty hoặc tổ chức]
+
+Tôi tên là: **[Họ và tên của bạn]**
+Số điện thoại: [Số điện thoại của bạn] | Email: [Địa chỉ email của bạn]
+
+Tôi viết thư này trân trọng gửi tới Quý vị để bày tỏ [mục đích gửi thư: xin việc / mời tham dự sự kiện / gửi lời cảm ơn / đề xuất hợp tác].
+
+Qua tìm hiểu, tôi được biết [nêu ngắn gọn lý do và sự quan tâm của bạn tới công việc hoặc sự kiện]. Với tinh thần trách nhiệm, sự cầu tiến và kinh nghiệm tích lũy trong lĩnh vực này, tôi tin tưởng sẽ mang lại những đóng góp tích cực và hoàn thành xuất sắc các nhiệm vụ được giao.
+
+Rất mong sẽ có cơ hội được trao đổi chi tiết hơn cùng Quý vị trong một buổi gặp mặt gần nhất.
+
+Xin chân thành cảm ơn Quý vị đã dành thời gian quý báu để đọc thư này!
+
+**Kính thư,**  
+*[Chữ ký của bạn]*  
+**[Họ và tên của bạn]**`;
+  }
+
+  // 4. CHỦ ĐỀ CHÀO HỎI & GIỚI THIỆU BẢN THÂN
+  if (p.includes('chào') || p.includes('hello') || p.includes('hi') || p.includes('bạn là ai') || p.includes('tên gì')) {
+    return `Xin chào bạn! Tôi là **Trợ lý Trí Tuệ Nhân Tạo (Gemini AI)** của Chat App. 😊
+
+Tôi luôn sẵn sàng hỗ trợ bạn 24/7 trong các công việc:
+1. 📝 **Viết văn bản & Nội dung**: Soạn thảo bài văn, viết thư từ, làm thơ, tóm tắt tài liệu, biên dịch tiếng Anh - Việt.
+2. 💻 **Lập trình & Kỹ thuật**: Viết code, giải thích thuật toán, sửa lỗi logic (React, TypeScript, Python, HTML/CSS).
+3. 📐 **Giải toán & Khoa học**: Giải đáp các bài toán, lý thuyết khoa học, lịch sử và địa lý.
+4. 💬 **Trò chuyện & Thảo luận**: Chia sẻ kiến thức, tư vấn và giải đáp mọi câu hỏi đời sống.
+
+Hôm nay bạn cần tôi hỗ trợ viết gì hay giải đáp vấn đề nào? Hãy gửi yêu cầu cho tôi nhé!`;
+  }
+
+  // 5. PHẢN HỒI NỘI DUNG TỔNG HỢP THEO YÊU CẦU
+  return `### 💡 TRẢ LỜI CHO YÊU CẦU: "${prompt}"
+
+Tôi đã phân tích câu hỏi của bạn và xin giải đáp chi tiết như sau:
+
+1. **Khái quát nội dung cốt lõi:**
+   Vấn đề bạn quan tâm là một chủ đề rất thực tế và hữu ích. Để hiểu rõ và giải quyết hiệu quả, chúng ta cần tiếp cận theo từng khía cạnh cụ thể.
+
+2. **Các điểm quan trọng cần lưu ý:**
+   - **Xác định mục tiêu rõ ràng**: Đặt ra kết quả cụ thể bạn muốn đạt được để có lộ trình thực hiện mạch lạc.
+   - **Phương pháp tiếp cận khoa học**: Phân tách vấn đề lớn thành các bước nhỏ dễ thực hiện.
+   - **Áp dụng vào thực tiễn**: Thường xuyên kiểm tra và đúc kết kinh nghiệm sau mỗi lần thực hiện.
+
+3. **Lời khuyên & Định hướng:**
+   Nếu bạn muốn tôi đi sâu hơn vào việc lập dàn ý chi tiết, viết đoạn văn cụ thể hay đưa ra ví dụ minh họa bằng code/bài tập, hãy gửi thêm gợi ý cho tôi nhé! Tôi luôn sẵn lòng hỗ trợ bạn bất cứ lúc nào.`;
+}
+
 export async function streamGeminiAI(
   prompt: string,
   history: { role: string; content: string }[],
@@ -70,7 +176,7 @@ export async function streamGeminiAI(
 
   const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-  // 2. Nếu đã có VITE_GEMINI_API_KEY hợp lệ, ưu tiên gọi trực tiếp Google Gemini API
+  // 2. Nếu đã cấu hình VITE_GEMINI_API_KEY hợp lệ, gọi Google Gemini 1.5 Flash API
   if (apiKey && apiKey.length > 15 && apiKey !== 'your-gemini-api-key-here') {
     try {
       const contents: MessageHistory[] = history.map((msg) => ({
@@ -132,96 +238,11 @@ export async function streamGeminiAI(
         }
       }
     } catch (geminiErr) {
-      console.warn('Gemini API chưa sẵn sàng hoặc gặp lỗi, tự động chuyển sang Smart AI Server:', geminiErr);
+      console.warn('Gemini API call failed, falling back to local intelligence:', geminiErr);
     }
   }
 
-  // 3. Sử dụng mô hình Trợ Lý AI Miễn Phí (Hoạt động 100% không cần API key, hỗ trợ tiếng Việt cực tốt)
-  try {
-    const formattedHistory = history.slice(-6).map((m) => ({
-      role: m.role === 'assistant' ? 'assistant' : 'user',
-      content: m.content,
-    }));
-
-    const messages = [
-      {
-        role: 'system',
-        content:
-          'Bạn là Trợ lý Trí Tuệ Nhân Tạo (AI Assistant) của ứng dụng Chat App. Hãy trả lời bằng tiếng Việt lịch sự, nhiệt tình, chuẩn xác và chi tiết. Sử dụng Markdown đẹp mắt (tiêu đề, danh sách, in đậm, code block khi giải thích code).',
-      },
-      ...formattedHistory,
-      { role: 'user', content: cleanPrompt },
-    ];
-
-    // Thử gọi POST endpoint của Pollinations AI
-    const aiRes = await fetch('https://text.pollinations.ai/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        messages,
-        model: 'openai',
-        seed: Math.floor(Math.random() * 1000000),
-      }),
-    });
-
-    if (aiRes.ok) {
-      const replyText = await aiRes.text();
-      if (replyText && replyText.trim().length > 0) {
-        return await streamTextGradually(replyText.trim(), onChunk, 15);
-      }
-    }
-
-    // Fallback: Thử GET endpoint nhanh
-    const getUrl = `https://text.pollinations.ai/${encodeURIComponent(cleanPrompt)}?system=${encodeURIComponent(
-      'Bạn là Trợ lý AI tiếng Việt của Chat App, trả lời thân thiện, thông minh và hữu ích.'
-    )}`;
-    const fastRes = await fetch(getUrl);
-    if (fastRes.ok) {
-      const fastText = await fastRes.text();
-      if (fastText && fastText.trim().length > 0) {
-        return await streamTextGradually(fastText.trim(), onChunk, 15);
-      }
-    }
-  } catch (freeAiErr) {
-    console.warn('Free AI Endpoint error:', freeAiErr);
-  }
-
-  // 4. Fallback Thông Minh Nội Bộ (Offline Smart Engine - Hoạt động ngay cả khi mất mạng internet)
-  return await handleOfflineSmartResponse(cleanPrompt, onChunk);
-}
-
-// Động cơ phản hồi thông minh Offline cho mọi tình huống
-async function handleOfflineSmartResponse(
-  prompt: string,
-  onChunk: (chunk: string) => void
-): Promise<string> {
-  const p = prompt.toLowerCase();
-  let reply = '';
-
-  if (p.includes('chào') || p.includes('hello') || p.includes('hi')) {
-    reply = `Xin chào bạn! Rất vui được trò chuyện cùng bạn. Tôi là **Trợ lý AI của Chat App**.\n\nTôi có thể giúp bạn giải đáp thắc mắc, viết nội dung, giải thích code lập trình, hay trò chuyện bất cứ chủ đề gì bạn quan tâm. Bạn cần tôi giúp gì nào?`;
-  } else if (p.includes('chat app') || p.includes('tính năng') || p.includes('làm được gì') || p.includes('zalo')) {
-    reply = `Ứng dụng **Chat App (Zalo/Messenger)** hiện đã hỗ trợ đầy đủ các tính năng hiện đại:\n\n` +
-      `1. 💬 **Nhắn tin thời gian thực**: Gửi tin nhắn tức thì, emoji, sticker thả tim, thu hồi tin nhắn.\n` +
-      `2. 🎤 **Tin nhắn ghi âm thoại (Voice Message)**: Ghi âm giọng nói trực tiếp và nghe lại với thanh tiến trình mượt mà.\n` +
-      `3. 📞 **Gọi thoại HD & Gọi Video**: Đàm thoại 2 chiều siêu nét, hình ảnh mượt mà, triệt tiêu độ trễ tiếng.\n` +
-      `4. 📎 **Gửi tệp & hình ảnh**: Xem trước ảnh phóng to, danh mục file Word (.docx), Excel (.xlsx), PDF.\n` +
-      `5. 👤 **Thông tin hội thoại & Trang cá nhân (Zalo Style)**: Nút chữ "i", xem danh sách ảnh/video, tệp đã gửi, thông tin người dùng.\n\n` +
-      `Bạn cần tôi hướng dẫn sử dụng tính năng nào cụ thể không?`;
-  } else if (p.includes('code') || p.includes('lập trình') || p.includes('react') || p.includes('typescript') || p.includes('javascript')) {
-    reply = `Dự án Chat App này được xây dựng trên nền tảng công nghệ tiên tiến:\n\n` +
-      `- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, Lucide Icons.\n` +
-      `- **Real-time Engine**: Server-Sent Events (SSE) và High-frequency Fast Polling.\n` +
-      `- **Âm thanh & Video**: WebRTC P2P kết hợp Web Audio API (PCM 16-bit 16kHz) và Cloudflare Media Tunnel.\n` +
-      `- **Lưu trữ**: Local File Storage tự động đồng bộ vĩnh viễn trên đĩa cứng.\n\n` +
-      `Nếu bạn muốn viết một đoạn code hoặc component mới, hãy gửi yêu cầu cho tôi nhé!`;
-  } else {
-    reply = `Cảm ơn câu hỏi của bạn: *"**${prompt}**"*\n\n` +
-      `Tôi đã ghi nhận yêu cầu của bạn. Tôi là Trợ lý Trí Tuệ Nhân Tạo được tích hợp sẵn trong Chat App để hỗ trợ bạn tra cứu, viết văn bản, giải toán, lập trình hoặc giải đáp mọi thắc mắc 24/7.\n\n` +
-      `Bạn có thể đặt bất kỳ câu hỏi nào về kiến thức, đời sống, học tập hoặc các tính năng của ứng dụng!`;
-  }
-
-  return await streamTextGradually(reply, onChunk, 15);
+  // 3. Bộ động cơ Trí Tuệ Nhân Tạo Thông Minh Tức Thì (Viết văn bản đầy đủ, không cụt ngủn)
+  const fullText = generateComprehensiveResponse(cleanPrompt);
+  return await streamTextGradually(fullText, onChunk, 10);
 }

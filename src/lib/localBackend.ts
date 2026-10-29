@@ -167,33 +167,32 @@ function cleanText(t?: string): string {
   return t.toLowerCase().replace(/[@\s\-\.\_\,\:\#]/g, '').trim();
 }
 
-// Tìm kiếm người dùng thông minh: khớp theo SĐT (bất kể +84 hay 0), username, display_name, hoặc ID
+// Tìm kiếm người dùng thông minh: ưu tiên khớp chính xác (ID, Username, SĐT) trước, sau đó mới khớp gần đúng
 function findUserByQuery(query: string, excludeId?: string): UserStore | undefined {
   const q = query.trim();
   if (!q) return undefined;
   const qClean = cleanText(q);
   const qPhone = cleanPhone(q);
 
+  // 1. Vòng lặp khớp CHÍNH XÁC
   for (const u of users.values()) {
     if (excludeId && u.id === excludeId) continue;
-    // 1. Khớp ID trực tiếp
     if (u.id === q || u.id === qClean) return u;
-    // 2. Khớp Username
     if (cleanText(u.username) === qClean) return u;
-    // 3. Khớp Số điện thoại (0964... vs +84964... vs 964...)
     if (qPhone && u.phone) {
       const uPhone = cleanPhone(u.phone);
-      if (uPhone && (uPhone === qPhone || uPhone.endsWith(qPhone) || qPhone.endsWith(uPhone))) {
-        return u;
-      }
+      if (uPhone && uPhone === qPhone) return u;
     }
-    // 4. Khớp Tên hiển thị
     if (cleanText(u.display_name) === qClean) return u;
-    // 5. Username chứa query
-    if (cleanText(u.username).includes(qClean) || (qClean.length >= 3 && qClean.includes(cleanText(u.username)))) return u;
-    // 6. Tên hiển thị chứa query
+  }
+
+  // 2. Vòng lặp khớp GẦN ĐÚNG
+  for (const u of users.values()) {
+    if (excludeId && u.id === excludeId) continue;
+    if (cleanText(u.username).includes(qClean) || (qClean.length >= 3 && cleanText(u.username).startsWith(qClean))) return u;
     if (u.display_name.toLowerCase().includes(q.toLowerCase())) return u;
   }
+
   return undefined;
 }
 
