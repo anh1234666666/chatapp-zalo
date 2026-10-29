@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="vi" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat App — Connect Anywhere, Anytime | Real-Time Chat & AI Assistant</title>
+  <meta name="description" content="Nền tảng chat thời gian thực đa mạng, gọi video HD, chia sẻ tệp tin và tích hợp trợ lý AI thông minh." />
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              cyan: '#06b6d4',
+              blue: '#3b82f6',
+              dark: '#0b1120',
+              card: 'rgba(15, 23, 42, 0.75)',
+            }
+          },
+          animation: {
+            'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'float': 'float 6s ease-in-out infinite',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0b1120;
+      color: #f1f5f9;
+      overflow-x: hidden;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card-hover:hover {
+      border-color: rgba(6, 182, 212, 0.35);
+      box-shadow: 0 10px 30px -10px rgba(6, 182, 212, 0.25);
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #38bdf8 0%, #06b6d4 40%, #3b82f6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .glow-cyan {
+      box-shadow: 0 0 40px -10px rgba(6, 182, 212, 0.45);
+    }
+    /* Custom Scrollbar for Chat Simulation */
+    .custom-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.25);
+      border-radius: 9999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(6, 182, 212, 0.5);
+    }
+  </style>
+</head>
+
+<body class="selection:bg-cyan-500 selection:text-white">
+  <!-- Subtle Background Grid & Glow Orbs -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-40 left-1/4 w-96 h-96 bg-cyan-500/15 rounded-full blur-3xl"></div>
+    <div class="absolute top-1/3 -right-20 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl"></div>
+    <div class="absolute -bottom-20 left-1/3 w-[30rem] h-[30rem] bg-indigo-600/10 rounded-full blur-3xl"></div>
+    <div class="absolute inset-0 bg-[linear-gradient(to_right,#1e293b0a_1px,transparent_1px),linear-gradient(to_bottom,#1e293b0a_1px,transparent_1px)] bg-[size:32px_32px]"></div>
+  </div>
+
+  <div class="relative z-10 flex flex-col min-h-screen">
+    
+    <!-- 1. STICKY NAVBAR -->
+    <header class="sticky top-0 z-50 glass-card border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+        <!-- Logo -->
+        <a href="#" class="flex items-center gap-3 group">
+          <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cyan-500 via-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-cyan-500/25 group-hover:scale-105 transition-transform duration-300">
+            <i data-lucide="message-square" class="w-6 h-6 text-white"></i>
+          </div>
+          <div class="flex flex-col">
+            <span class="text-xl font-extrabold tracking-tight text-white flex items-center gap-1.5">
+              Chat<span class="gradient-text">App</span>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-semibold tracking-wide uppercase">AI 2.0</span>
+            </span>
+            <span class="text-[11px] text-slate-400 font-medium">Real-Time Cross-Network</span>
+          </div>
+        </a>
+
+        <!-- Desktop Navigation Links -->
+        <nav class="hidden md:flex items-center gap-8">
+          <a href="#features" class="text-sm font-medium text-slate-300 hover:text-cyan-400 transition-colors">Tính Năng</a>
+          <a href="#interactive-demo" class="text-sm font-medium text-slate-300 hover:text-cyan-400 transition-colors">Live Demo</a>
+          <a href="#ai-assistant" class="text-sm font-medium text-slate-300 hover:text-cyan-400 transition-colors flex items-center gap-1.5">
+            <i data-lucide="sparkles" class="w-4 h-4 text-cyan-400"></i> AI Assistant
+          </a>
+          <a href="#security" class="text-sm font-medium text-slate-300 hover:text-cyan-400 transition-colors">Bảo Mật</a>
+          <a href="#architecture" class="text-sm font-medium text-slate-300 hover:text-cyan-400 transition-colors">Kiến Trúc</a>
+        </nav>
+
+        <!-- Navbar Actions -->
+        <div class="flex items-center gap-3">
+          <button onclick="openAuthModal('signin')" class="hidden sm:inline-flex px-4 py-2 text-sm font-semibold text-slate-300 hover:text-white rounded-xl hover:bg-slate-800/80 transition-all">
+            Đăng Nhập
+          </button>
+          <a href="#interactive-demo" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold text-sm shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center gap-2">
+            <span>Mở Web App</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </a>
+          <!-- Mobile Menu Button -->
+          <button id="mobileMenuBtn" class="md:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition">
+            <i data-lucide="menu" class="w-6 h-6"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Dropdown -->
+      <div id="mobileMenu" class="hidden md:hidden border-t border-slate-800 px-6 py-4 space-y-3 glass-card bg-slate-950/95">
+        <a href="#features" class="block text-sm font-medium text-slate-300 hover:text-cyan-400 py-1">Tính Năng</a>
+        <a href="#interactive-demo" class="block text-sm font-medium text-slate-300 hover:text-cyan-400 py-1">Live Demo Trải Nghiệm</a>
+        <a href="#ai-assistant" class="block text-sm font-medium text-slate-300 hover:text-cyan-400 py-1">AI Assistant</a>
+        <a href="#security" class="block text-sm font-medium text-slate-300 hover:text-cyan-400 py-1">Bảo Mật & Riêng Tư</a>
+        <a href="#architecture" class="block text-sm font-medium text-slate-300 hover:text-cyan-400 py-1">Kiến Trúc Kỹ Thuật</a>
+        <div class="pt-3 border-t border-slate-800/80 flex flex-col gap-2">
+          <button onclick="openAuthModal('signin')" class="w-full py-2 text-sm text-center font-medium text-slate-300 bg-slate-800/60 rounded-lg">Đăng Nhập</button>
+          <button onclick="openAuthModal('signup')" class="w-full py-2 text-sm text-center font-medium text-white bg-cyan-500 rounded-lg">Tạo Tài Khoản</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-grow">
+      
+      <!-- 2. HERO SECTION -->
+      <section class="relative pt-12 pb-20 md:pt-20 md:pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div class="text-center max-w-3xl mx-auto space-y-6">
+          <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full glass-card border border-cyan-500/30 text-xs font-semibold text-cyan-300 tracking-wide">
+            <span class="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Kết nối đa mạng P2P & Relay TURN Ready • Phiên bản 2.4
+          </div>
+
+          <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.15]">
+            Connect Anywhere, Anytime — <br class="hidden sm:block"/>
+            <span class="gradient-text">Real-Time Chat Meets AI</span>
+          </h1>
+
+          <p class="text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            Ứng dụng chat nền tảng web thế hệ mới kết nối bạn bè xuyên mạng (khác Wi-Fi / 4G) cực nhẹ, chuẩn xác từng mili-giây, gọi video HD và trợ lý AI thông minh đồng hành trong mọi đoạn hội thoại.
+          </p>
+
+          <div class="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <a href="#interactive-demo" class="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 via-blue-500 to-indigo-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-base shadow-xl shadow-cyan-500/30 hover:scale-105 active:scale-100 transition-all flex items-center justify-center gap-3">
+              <i data-lucide="play" class="w-5 h-5 fill-current"></i>
+              <span>Trải Nghiệm Live Demo Ngay</span>
+            </a>
+            <a href="#features" class="w-full sm:w-auto px-7 py-3.5 rounded-xl glass-card text-slate-300 hover:text-white hover:bg-slate-800/80 font-semibold text-base transition-all flex items-center justify-center gap-2">
+              <i data-lucide="compass" class="w-5 h-5 text-cyan-400"></i>
+              <span>Khám Phá Tính Năng</span>
+            </a>
+          </div>
+
+          <!-- Quick Stats Banner -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-10 text-left">
+            <div class="glass-card p-4 rounded-2xl border border-slate-800">
+              <div class="text-2xl font-bold text-cyan-400">&lt; 35ms</div>
+              <div class="text-xs text-slate-400 font-medium">Độ trễ tin nhắn WebSocket</div>
+            </div>
+            <div class="glass-card p-4 rounded-2xl border border-slate-800">
+              <div class="text-2xl font-bold text-blue-400">100% P2P</div>
+              <div class="text-xs text-slate-400 font-medium">WebRTC NAT Traversal</div>
+            </div>
+            <div class="glass-card p-4 rounded-2xl border border-slate-800">
+              <div class="text-2xl font-bold text-emerald-400">E2E Ready</div>
+              <div class="text-xs text-slate-400 font-medium">Mã hoá tin nhắn đầu-cuối</div>
+            </div>
+            <div class="glass-card p-4 rounded-2xl border border-slate-800">
+              <div class="text-2xl font-bold text-indigo-400">AI Streaming</div>
+              <div class="text-xs text-slate-400 font-medium">Phản hồi theo thời gian thực</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interactive Hero Showcase Tabs -->
+        <div class="mt-14 max-w-4xl mx-auto">
+          <!-- Switch Tabs -->
+          <div class="flex justify-center mb-6">
+            <div class="glass-card p-1.5 rounded-2xl inline-flex gap-2 border border-slate-800">
+              <button id="heroTabZalo" onclick="switchHeroMode('zalo')" class="px-5 py-2 rounded-xl text-sm font-semibold transition-all bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md">
+                <span class="flex items-center gap-2"><i data-lucide="users" class="w-4 h-4"></i> Chat Bạn Bè (Phong Cách Zalo)</span>
+              </button>
+              <button id="heroTabAi" onclick="switchHeroMode('ai')" class="px-5 py-2 rounded-xl text-sm font-semibold transition-all text-slate-400 hover:text-slate-200">
+                <span class="flex items-center gap-2"><i data-lucide="bot" class="w-4 h-4"></i> Trợ Lý AI Thời Gian Thực</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Preview Card Container -->
+          <div class="glass-card rounded-3xl p-5 md:p-6 border border-slate-700/60 shadow-2xl glow-cyan">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-4">
+              <div class="flex items-center gap-3">
+                <div class="relative">
+                  <div id="heroAvatar" class="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-500 to-emerald-500 flex items-center justify-center font-bold text-white text-sm">
+                    MA
+                  </div>
+                  <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-900"></span>
+                </div>
+                <div>
+                  <h4 id="heroChatTitle" class="font-bold text-white text-sm flex items-center gap-2">
+                    Minh Anh (0912 345 678)
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">Bạn Bè</span>
+                  </h4>
+                  <p id="heroChatSubtitle" class="text-xs text-slate-400">Đang hoạt động • Khác mạng (4G Viettel)</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 text-slate-400">
+                <button title="Gọi thoại" class="p-2 rounded-lg hover:bg-slate-800 hover:text-cyan-400 transition"><i data-lucide="phone" class="w-4 h-4"></i></button>
+                <button title="Gọi video" class="p-2 rounded-lg hover:bg-slate-800 hover:text-cyan-400 transition"><i data-lucide="video" class="w-4 h-4"></i></button>
+                <button title="Tuỳ chọn" class="p-2 rounded-lg hover:bg-slate-800 hover:text-white transition"><i data-lucide="more-vertical" class="w-4 h-4"></i></button>
+              </div>
+            </div>
+
+            <!-- Messages Stream in Hero Showcase -->
+            <div id="heroChatStream" class="space-y-4 max-h-72 overflow-y-auto pr-2 custom-scroll">
+              <!-- Content rendered via JS below -->
+            </div>
+
+            <!-- Static/Dummy Input bar in Hero Showcase -->
+            <div class="mt-4 pt-3 border-t border-slate-800 flex items-center gap-3">
+              <button class="text-slate-400 hover:text-cyan-400 p-2 rounded-lg"><i data-lucide="paperclip" class="w-4 h-4"></i></button>
+              <button class="text-slate-400 hover:text-cyan-400 p-2 rounded-lg"><i data-lucide="image" class="w-4 h-4"></i></button>
+              <div class="flex-grow bg-slate-900/90 rounded-xl px-4 py-2.5 text-xs text-slate-500 border border-slate-800 flex items-center justify-between">
+                <span>Nhập tin nhắn hoặc gõ /ai để hỏi trợ lý thông minh...</span>
+                <i data-lucide="smile" class="w-4 h-4 text-slate-500"></i>
+              </div>
+              <button class="bg-cyan-500 hover:bg-cyan-400 text-white p-2.5 rounded-xl transition"><i data-lucide="send" class="w-4 h-4"></i></button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. FEATURES GRID -->
+      <section id="features" class="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-slate-800/80">
+        <div class="text-center max-w-2xl mx-auto mb-16 space-y-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">Bộ Tính Năng Toàn Diện</span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Sức Mạnh Của Nền Tảng Chat Hiện Đại</h2>
+          <p class="text-slate-400 text-sm sm:text-base">Thiết kế tối ưu cho trải nghiệm nhắn tin mượt mà, thân thiện như Zalo nhưng mạnh mẽ hơn với công nghệ AI và P2P thế hệ mới.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          
+          <!-- Feature 1 -->
+          <div class="glass-card glass-card-hover p-7 rounded-3xl transition-all duration-300 group">
+            <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 mb-5 group-hover:scale-110 group-hover:bg-cyan-500 group-hover:text-white transition-all">
+              <i data-lucide="globe-2" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Kết Nối Đa Mạng Toàn Cầu</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              Trò chuyện thông suốt dù 2 người dùng ở 2 mạng Wi-Fi khác nhau, dùng 4G/5G hoặc qua router NAT. Hỗ trợ hạ tầng WebSockets + STUN/TURN Server đảm bảo tỷ lệ kết nối 99.9%.
+            </p>
+          </div>
+
+          <!-- Feature 2 -->
+          <div class="glass-card glass-card-hover p-7 rounded-3xl transition-all duration-300 group">
+            <div class="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 mb-5 group-hover:scale-110 group-hover:bg-blue-500 group-hover:text-white transition-all">
+              <i data-lucide="clock-check" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Tin Nhắn Real-Time & Timestamps</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              Hiển thị trạng thái Đã gửi (✓), Đã nhận (✓✓), Đã xem (✓✓ xanh) ngay lập tức. Mốc thời gian lưu chuẩn UTC trên Database và hiển thị chuẩn xác theo múi giờ địa phương của từng người.
+            </p>
+          </div>
+
+          <!-- Feature 3 -->
+          <div class="glass-card glass-card-hover p-7 rounded-3xl transition-all duration-300 group">
+            <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-5 group-hover:scale-110 group-hover:bg-indigo-500 group-hover:text-white transition-all">
+              <i data-lucide="file-box" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Chia Sẻ Đa Phương Tiện & Tệp Lớn</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              Gửi ảnh độ phân giải cao, file PDF, tài liệu Word/Excel, file nén ZIP không bị bóp nén hình ảnh. Tích hợp bộ đọc trước (preview card) tiện lợi ngay trong luồng hội thoại.
+            </p>
+          </div>
+
+          <!-- Feature 4 -->
+          <div class="glass-card glass-card-hover p-7 rounded-3xl transition-all duration-300 group">
+            <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-5 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+              <i data-lucide="video" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Cuộc Gọi Video & Thoại WebRTC</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              Gọi 1-1 và gọi nhóm chất lượng cao HD với công nghệ WebRTC P2P direct stream, tối ưu băng thông và giảm độ trễ giọng nói xuống mức nhỏ nhất dưới 100ms.
+            </p>
+          </div>
+
+          <!-- Feature 5 -->
+          <div class="glass-card glass-card-hover p-7 rounded-3xl transition-all duration-300 group border-cyan-500/30">
+            <div class="w-12 h-12 rounded-2xl bg-cyan-400/20 border border-cyan-400/30 flex items-center justify-center text-cyan-300 mb-5 group-hover:scale-110 group-hover:bg-gradient-to-r group-hover:from-cyan-500 group-hover:to-blue-600 group-hover:text-white transition-all">
+              <i data-lucide="sparkles" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2 flex items-center gap-2">
+              Trợ Lý AI Streaming Trực Tiếp
+              <span class="text-[10px] bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded-full font-mono">HOT</span>
+            </h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              Hỏi đáp, tóm tắt đoạn chat, dịch thuật tự động, gợi ý câu trả lời thông minh hoặc trò chuyện chuyên sâu với AI ngay trong danh bạ với cơ chế truyền dữ liệu streaming mượt mà.
+            </p>
+          </div>
+
+          <!-- Feature 6 -->
+          <div class="glass-card glass-card-hover p-7 rounded-3xl transition-all duration-300 group">
+            <div class="w-12 h-12 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center text-rose-400 mb-5 group-hover:scale-110 group-hover:bg-rose-500 group-hover:text-white transition-all">
+              <i data-lucide="user-check" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Quản Lý Danh Bạ & Chặn Người Lạ</h3>
+            <p class="text-sm text-slate-400 leading-relaxed">
+              Tìm bạn bằng số điện thoại chính xác, kết bạn Zalo style, đặt bí danh, quản lý nhóm chat tiện ích. Thiết lập chặn tin nhắn người lạ hoặc chặn hoàn toàn chỉ với một chạm.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 4. LIVE INTERACTIVE UI MOCKUP DEMO -->
+      <section id="interactive-demo" class="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div class="text-center max-w-3xl mx-auto mb-12 space-y-3">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs font-semibold text-cyan-400">
+            <i data-lucide="laptop" class="w-4 h-4"></i> Trải Nghiệm Giao Diện Trực Quan (Interactive Demo)
+          </div>
+          <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Thử Nhắn Tin Trực Tiếp Trong Ứng Dụng</h2>
+          <p class="text-slate-400 text-sm">Gõ tin nhắn, đổi người liên hệ, thử gửi file hoặc kích hoạt chế độ AI Assistant bên dưới để trải nghiệm tốc độ thực tế!</p>
+        </div>
+
+        <!-- The Interactive App Shell -->
+        <div class="glass-card rounded-3xl overflow-hidden border border-slate-700/80 shadow-2xl max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 min-h-[680px]">
+          
+          <!-- LEFT SIDEBAR: Contacts & Search (4 Cols) -->
+          <div class="lg:col-span-4 border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-950/60 flex flex-col">
+            
+            <!-- User Profile Header -->
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="relative">
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center font-bold text-white text-sm shadow">
+                    ME
+                  </div>
+                  <span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-900" title="Online"></span>
+                </div>
+                <div>
+                  <h4 class="font-bold text-white text-sm">Bạn (User Active)</h4>
+                  <p class="text-[11px] text-slate-400">0988 123 456 • Trực tuyến</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-1 text-slate-400">
+                <button title="Cài đặt" class="p-2 hover:bg-slate-800 rounded-lg transition"><i data-lucide="settings" class="w-4 h-4"></i></button>
+                <button title="Thêm bạn mới" onclick="promptAddFriend()" class="p-2 hover:bg-slate-800 rounded-lg text-cyan-400 transition"><i data-lucide="user-plus" class="w-4 h-4"></i></button>
+              </div>
+            </div>
+
+            <!-- Search by Phone or Name -->
+            <div class="p-3 border-b border-slate-800/80">
+              <div class="relative">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+                <input id="contactSearchInput" type="text" placeholder="Tìm theo số điện thoại (09...), tên..." oninput="filterContacts(this.value)" class="w-full bg-slate-900 text-xs text-white rounded-xl pl-9 pr-8 py-2.5 border border-slate-800 focus:outline-none focus:border-cyan-500/80 transition" />
+                <i data-lucide="phone" class="w-3.5 h-3.5 text-slate-500 absolute right-3 top-3.5"></i>
+              </div>
+
+              <!-- Quick Filter Pills -->
+              <div class="flex gap-1.5 mt-2.5">
+                <button onclick="setFilterCategory('all')" id="pill-all" class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Tất cả</button>
+                <button onclick="setFilterCategory('friends')" id="pill-friends" class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-900 text-slate-400 hover:text-white border border-slate-800">Bạn bè</button>
+                <button onclick="setFilterCategory('groups')" id="pill-groups" class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-900 text-slate-400 hover:text-white border border-slate-800">Nhóm</button>
+                <button onclick="setFilterCategory('ai')" id="pill-ai" class="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-900 text-slate-400 hover:text-white border border-slate-800 flex items-center gap-1">
+                  <i data-lucide="sparkles" class="w-3 h-3 text-cyan-400"></i> AI Bot
+                </button>
+              </div>
+            </div>
+
+            <!-- Contact List Scroll -->
+            <div id="contactListContainer" class="flex-grow overflow-y-auto custom-scroll divide-y divide-slate-900/60">
+              <!-- Contacts generated dynamically via JS -->
+            </div>
+            
+            <!-- Bottom Security notice -->
+            <div class="p-3 border-t border-slate-800 text-[11px] text-slate-400 flex items-center justify-between bg-slate-950/80">
+              <span class="flex items-center gap-1.5 text-emerald-400">
+                <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Chống spam & người lạ
+              </span>
+              <span class="text-slate-500">ID: #94821</span>
+            </div>
+          </div>
+
+          <!-- RIGHT CHAT WINDOW: Header, Message Bubbles, Input Bar (8 Cols) -->
+          <div class="lg:col-span-8 flex flex-col bg-slate-900/40">
+            
+            <!-- Active Conversation Header -->
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
+              <div class="flex items-center gap-3">
+                <div class="relative">
+                  <div id="activeChatAvatar" class="w-11 h-11 rounded-full bg-gradient-to-tr from-cyan-500 to-emerald-500 flex items-center justify-center font-bold text-white text-sm shadow">
+                    MA
+                  </div>
+                  <span id="activeChatStatusDot" class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-900"></span>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 id="activeChatName" class="font-bold text-white text-base">Minh Anh</h3>
+                    <span id="activeChatBadge" class="text-[10px] px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-medium">Bạn Bè</span>
+                  </div>
+                  <p id="activeChatMeta" class="text-xs text-slate-400 flex items-center gap-2">
+                    <span id="activeChatPhone">SĐT: 0912 345 678</span> • <span class="text-emerald-400">Đang hoạt động (Cross-Wi-Fi)</span>
+                  </p>
+                </div>
+              </div>
+
+              <!-- Header Action Controls -->
+              <div class="flex items-center gap-1.5">
+                <!-- AI Mode Toggle button -->
+                <button id="toggleAiCompanionBtn" onclick="toggleChatAiAssistant()" class="px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-xs font-semibold text-slate-300 flex items-center gap-1.5 transition">
+                  <i data-lucide="bot" class="w-4 h-4 text-cyan-400"></i>
+                  <span id="aiToggleLabel">Bật AI Hỗ Trợ</span>
+                </button>
+
+                <button onclick="triggerCallSimulation('audio')" title="Gọi thoại (WebRTC)" class="p-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition">
+                  <i data-lucide="phone" class="w-4 h-4"></i>
+                </button>
+                <button onclick="triggerCallSimulation('video')" title="Gọi video HD" class="p-2.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition">
+                  <i data-lucide="video" class="w-4 h-4"></i>
+                </button>
+                <button onclick="toggleBlockContact()" id="blockContactBtn" title="Chặn người này" class="p-2.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-slate-800 transition">
+                  <i data-lucide="user-x" class="w-4 h-4"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Messages Thread Area -->
+            <div id="messagesContainer" class="flex-grow p-5 space-y-4 overflow-y-auto custom-scroll max-h-[460px]">
+              <!-- Dynamic Messages loaded by JS -->
+            </div>
+
+            <!-- Typing indicator slot -->
+            <div id="typingIndicator" class="hidden px-5 py-1 text-xs text-slate-400 flex items-center gap-2">
+              <span class="flex gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.2s]"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-bounce [animation-delay:0.4s]"></span>
+              </span>
+              <span id="typingIndicatorText">Đối phương đang soạn tin nhắn...</span>
+            </div>
+
+            <!-- Blocked Banner (hidden by default) -->
+            <div id="blockedBanner" class="hidden bg-rose-500/10 border-t border-rose-500/30 p-3 text-center text-xs text-rose-300 font-medium">
+              Bạn đã chặn người dùng này. Hai người sẽ không thể nhắn tin hoặc gọi cho nhau.
+              <button onclick="toggleBlockContact()" class="underline ml-2 text-rose-200 font-bold hover:text-white">Bỏ chặn</button>
+            </div>
+
+            <!-- Chat Input Controls -->
+            <div id="chatInputBar" class="p-4 border-t border-slate-800 bg-slate-950/80">
+              <form id="chatForm" onsubmit="handleSendMessage(event)" class="flex items-center gap-2">
+                
+                <div class="flex items-center gap-1 text-slate-400">
+                  <button type="button" onclick="sendAttachmentDemo('image')" title="Gửi hình ảnh" class="p-2 hover:text-cyan-400 hover:bg-slate-900 rounded-lg transition">
+                    <i data-lucide="image" class="w-4 h-4"></i>
+                  </button>
+                  <button type="button" onclick="sendAttachmentDemo('file')" title="Gửi tệp tài liệu" class="p-2 hover:text-cyan-400 hover:bg-slate-900 rounded-lg transition">
+                    <i data-lucide="paperclip" class="w-4 h-4"></i>
+                  </button>
+                </div>
+
+                <div class="relative flex-grow">
+                  <input id="messageTextInput" type="text" placeholder="Nhập tin nhắn... (hoặc gõ '@ai câu hỏi' để hỏi trợ lý)" autocomplete="off" class="w-full bg-slate-900 text-sm text-white rounded-xl pl-4 pr-10 py-3 border border-slate-700/80 focus:outline-none focus:border-cyan-400 transition" />
+                  <button type="button" onclick="insertEmojiDemo()" class="absolute right-3 top-3 text-slate-400 hover:text-yellow-400 transition">
+                    <i data-lucide="smile" class="w-5 h-5"></i>
+                  </button>
+                </div>
+
+                <button type="submit" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white px-5 py-3 rounded-xl font-semibold shadow-lg shadow-cyan-500/20 hover:scale-105 active:scale-100 transition flex items-center justify-center">
+                  <i data-lucide="send" class="w-4 h-4"></i>
+                </button>
+              </form>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. SECURITY & PRIVACY SPOTLIGHT -->
+      <section id="security" class="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-slate-800/80">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+          
+          <div class="lg:col-span-6 space-y-6">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-xs font-semibold text-emerald-400">
+              <i data-lucide="shield" class="w-4 h-4"></i> Bảo Mật Cấp Doanh Nghiệp
+            </div>
+            
+            <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Quyền Riêng Tư Là Ưu Tiên Tuyệt Đối</h2>
+            
+            <p class="text-slate-400 text-base leading-relaxed">
+              Mỗi tin nhắn, tệp đính kèm và cuộc gọi video đều được bảo vệ với kiến trúc bảo mật đa lớp. Người dùng luôn nắm quyền kiểm soát ai được phép liên hệ và xem thông tin cá nhân.
+            </p>
+
+            <div class="space-y-4 pt-2">
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex-shrink-0 flex items-center justify-center text-emerald-400">
+                  <i data-lucide="lock" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold text-white text-base">Mã Hoá Đầu Cuối (E2EE)</h4>
+                  <p class="text-sm text-slate-400">Tin nhắn thoại và văn bản được mã hoá phía client bằng Web Cryptography API trước khi đẩy lên socket server.</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex-shrink-0 flex items-center justify-center text-cyan-400">
+                  <i data-lucide="user-x" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold text-white text-base">Bộ Lọc Chặn Người Lạ Triệt Để</h4>
+                  <p class="text-sm text-slate-400">Tuỳ chọn không nhận tin nhắn và cuộc gọi từ người chưa có trong danh bạ hoặc chặn vĩnh viễn theo ID/Phone.</p>
+                </div>
+              </div>
+
+              <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 flex-shrink-0 flex items-center justify-center text-blue-400">
+                  <i data-lucide="key" class="w-5 h-5"></i>
+                </div>
+                <div>
+                  <h4 class="font-bold text-white text-base">Xác Thực JWT & Session Độc Lập</h4>
+                  <p class="text-sm text-slate-400">Token bảo mật ngắn hạn, refresh token lưu an toàn trong HTTP-Only Cookie chống tấn công XSS/CSRF.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Security Card Widget -->
+          <div class="lg:col-span-6">
+            <div class="glass-card p-6 md:p-8 rounded-3xl border border-slate-700 space-y-6 glow-cyan">
+              <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-cyan-500/20 flex items-center justify-center text-cyan-400">
+                    <i data-lucide="sliders" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-white text-base">Thiết Lập Quyền Riêng Tư (Live)</h4>
+                    <p class="text-xs text-slate-400">Bật/tắt các lớp bảo vệ ngay tức thì</p>
+                  </div>
+                </div>
+                <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold">Được Bảo Vệ</span>
+              </div>
+
+              <div class="space-y-4">
+                <!-- Toggle 1 -->
+                <div class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800">
+                  <div>
+                    <div class="text-sm font-semibold text-white">Chặn tin nhắn từ người lạ</div>
+                    <div class="text-xs text-slate-400">Chỉ bạn bè trong danh bạ mới có thể nhắn tin</div>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked class="sr-only peer" onchange="notifySettingChange('Chặn người lạ')">
+                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+                  </label>
+                </div>
+
+                <!-- Toggle 2 -->
+                <div class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800">
+                  <div>
+                    <div class="text-sm font-semibold text-white">Ẩn số điện thoại cá nhân</div>
+                    <div class="text-xs text-slate-400">Người lạ không thể tra cứu thông tin khi tìm kiếm</div>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked class="sr-only peer" onchange="notifySettingChange('Ẩn số điện thoại')">
+                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+                  </label>
+                </div>
+
+                <!-- Toggle 3 -->
+                <div class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-900/80 border border-slate-800">
+                  <div>
+                    <div class="text-sm font-semibold text-white">Hiển thị trạng thái "Đã xem"</div>
+                    <div class="text-xs text-slate-400">Hiện dấu tích xanh hai vạch khi đã đọc tin</div>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked class="sr-only peer" onchange="notifySettingChange('Trạng thái đã xem')">
+                    <div class="w-11 h-6 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-cyan-500"></div>
+                  </label>
+                </div>
+              </div>
+
+              <div id="settingToast" class="hidden text-xs py-2 px-3 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 text-center animate-fade">
+                Đã cập nhật cài đặt bảo mật thành công!
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- 6. ARCHITECTURE OVERVIEW CALLOUT -->
+      <section id="architecture" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <div class="glass-card rounded-3xl p-8 md:p-12 border border-slate-800 bg-gradient-to-br from-slate-900/90 via-slate-950 to-slate-900/90 text-center space-y-6">
+          <span class="text-xs font-bold uppercase tracking-wider text-cyan-400">Dành Cho Nhà Phát Triển & Sinh Viên Đồ Án</span>
+          <h2 class="text-3xl sm:text-4xl font-extrabold text-white">Kiến Trúc Kỹ Thuật Đã Được Lập Kế Hoạch Đầy Đủ</h2>
+          <p class="text-slate-400 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
+            Hệ thống đi kèm toàn bộ bản thiết kế Full-Stack: Sơ đồ cơ sở dữ liệu (Users, Messages, Friends, BlockedUsers), WebSocket Event Maps, WebRTC STUN/TURN traversal và Streaming AI API pipeline.
+          </p>
+
+          <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+            <span class="px-3.5 py-1.5 rounded-xl bg-slate-800 text-xs font-mono text-cyan-300 border border-slate-700">Node.js + Express / Fastify</span>
+            <span class="px-3.5 py-1.5 rounded-xl bg-slate-800 text-xs font-mono text-blue-300 border border-slate-700">Socket.io / Native WebSockets</span>
+            <span class="px-3.5 py-1.5 rounded-xl bg-slate-800 text-xs font-mono text-emerald-300 border border-slate-700">WebRTC + Coturn (STUN/TURN)</span>
+            <span class="px-3.5 py-1.5 rounded-xl bg-slate-800 text-xs font-mono text-yellow-300 border border-slate-700">MongoDB / PostgreSQL</span>
+            <span class="px-3.5 py-1.5 rounded-xl bg-slate-800 text-xs font-mono text-purple-300 border border-slate-700">Gemini / OpenAI API</span>
+          </div>
+
+          <div class="pt-4">
+            <a href="ARCHITECTURE.md" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 hover:text-cyan-300 font-semibold text-sm border border-slate-700 transition">
+              <i data-lucide="file-code" class="w-4 h-4"></i>
+              <span>Xem Tài Liệu Sơ Đồ Kiến Trúc Hệ Thống (ARCHITECTURE.md)</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- 7. FOOTER -->
+    <footer class="border-t border-slate-800/80 bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 mt-20">
+      <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+        
+        <!-- Brand Info -->
+        <div class="space-y-4 md:col-span-1">
+          <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white">
+              <i data-lucide="message-square" class="w-5 h-5"></i>
+            </div>
+            <span class="text-lg font-extrabold text-white">Chat<span class="gradient-text">App</span></span>
+          </div>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Giải pháp web chat thời gian thực siêu nhẹ kết hợp AI. Tối ưu kết nối đa mạng P2P và bảo vệ tối đa dữ liệu riêng tư.
+          </p>
+          <div class="flex items-center gap-2">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            <span class="text-xs text-slate-400 font-medium">Hệ thống: Bình thường (100% Online)</span>
+          </div>
+        </div>
+
+        <!-- Navigation Columns -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4">Sản Phẩm</h4>
+          <ul class="space-y-2 text-xs text-slate-400">
+            <li><a href="#features" class="hover:text-cyan-400 transition">Web Chat Trực Tuyến</a></li>
+            <li><a href="#interactive-demo" class="hover:text-cyan-400 transition">Cuộc Gọi Video P2P</a></li>
+            <li><a href="#ai-assistant" class="hover:text-cyan-400 transition">Trợ Lý AI Tích Hợp</a></li>
+            <li><a href="#features" class="hover:text-cyan-400 transition">Ứng Dụng Đa Nền Tảng</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4">Nhà Phát Triển</h4>
+          <ul class="space-y-2 text-xs text-slate-400">
+            <li><a href="#architecture" class="hover:text-cyan-400 transition">Tài Liệu Kiến Trúc</a></li>
+            <li><a href="#architecture" class="hover:text-cyan-400 transition">Sơ Đồ WebSocket Events</a></li>
+            <li><a href="#security" class="hover:text-cyan-400 transition">Hướng Dẫn Bảo Mật E2EE</a></li>
+            <li><a href="https://github.com" target="_blank" class="hover:text-cyan-400 transition">Mã Nguồn Mẫu GitHub</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 mb-4">Kết Nối & Cộng Đồng</h4>
+          <div class="flex items-center gap-3 mb-4">
+            <a href="#" class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition"><i data-lucide="github" class="w-4 h-4"></i></a>
+            <a href="#" class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition"><i data-lucide="twitter" class="w-4 h-4"></i></a>
+            <a href="#" class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 transition"><i data-lucide="linkedin" class="w-4 h-4"></i></a>
+          </div>
+          <p class="text-xs text-slate-500">Được tối ưu cho mọi kích thước màn hình máy tính và thiết bị di động.</p>
+        </div>
+
+      </div>
+
+      <div class="max-w-7xl mx-auto pt-8 border-t border-slate-900 text-center flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+        <div>© 2026 Chat App. Giữ toàn quyền bảo lưu bản quyền thương hiệu.</div>
+        <div class="flex gap-4">
+          <a href="#" class="hover:text-slate-400">Điều Khoản Dịch Vụ</a>
+          <a href="#" class="hover:text-slate-400">Chính Sách Quyền Riêng Tư</a>
+          <a href="#" class="hover:text-slate-400">Bảo Mật</a>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- CALL SIMULATION MODAL -->
+  <div id="callModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-card max-w-sm w-full rounded-3xl p-6 border border-slate-700 text-center space-y-6 glow-cyan animate-pulse-slow">
+      <div class="relative w-24 h-24 mx-auto">
+        <div id="callModalAvatar" class="w-24 h-24 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-3xl font-bold text-white shadow-xl">
+          MA
+        </div>
+        <span class="absolute -top-1 -right-1 flex h-5 w-5">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-5 w-5 bg-cyan-500"></span>
+        </span>
+      </div>
+
+      <div>
+        <h3 id="callModalName" class="text-xl font-bold text-white">Minh Anh</h3>
+        <p id="callModalType" class="text-xs text-cyan-400 mt-1">Đang thiết lập kết nối WebRTC P2P Direct Stream...</p>
+        <p class="text-[11px] text-slate-400 mt-2">STUN: stun.l.google.com:19302 (Độ trễ: 28ms)</p>
+      </div>
+
+      <div class="flex items-center justify-center gap-4 pt-2">
+        <button onclick="toggleCallMute()" id="callMuteBtn" class="w-12 h-12 rounded-full bg-slate-800 text-slate-300 hover:text-white flex items-center justify-center transition">
+          <i data-lucide="mic" class="w-5 h-5"></i>
+        </button>
+        <button onclick="endCallSimulation()" class="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-500 text-white flex items-center justify-center shadow-lg shadow-rose-600/30 transition transform hover:scale-105">
+          <i data-lucide="phone-off" class="w-6 h-6"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH MODAL (Sign in / Sign up) -->
+  <div id="authModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="glass-card max-w-md w-full rounded-3xl p-6 sm:p-8 border border-slate-700 space-y-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-cyan-500 flex items-center justify-center text-white">
+            <i data-lucide="message-square" class="w-5 h-5"></i>
+          </div>
+          <span id="authModalTitle" class="text-lg font-bold text-white">Đăng Nhập Chat App</span>
+        </div>
+        <button onclick="closeAuthModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Số điện thoại (Phong cách Zalo)</label>
+          <div class="relative">
+            <i data-lucide="phone" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+            <input type="tel" required placeholder="0912 345 678" value="0912345678" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-400" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Mật khẩu</label>
+          <div class="relative">
+            <i data-lucide="lock" class="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5"></i>
+            <input type="password" required placeholder="••••••••" value="demo123456" class="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-400" />
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 text-white font-bold text-sm shadow-lg shadow-cyan-500/25 transition">
+          Xác Nhận & Tiếp Tục
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT APPLICATION LOGIC -->
+  <script>
+    // ----------------------------------------------------
+    // INITIAL DATA & STATE
+    // ----------------------------------------------------
+    const CONTACTS = [
+      {
+        id: 'c1',
+        name: 'Minh Anh',
+        phone: '0912 345 678',
+        avatarBg: 'from-cyan-500 to-emerald-500',
+        initials: 'MA',
+        status: 'online',
+        category: 'friends',
+        unread: 0,
+        isBlocked: false,
+        messages: [
+          { sender: 'them', text: 'Chào bạn! Bạn đang dùng mạng Wi-Fi nào vậy?', time: '10:41 AM', status: 'read' },
+          { sender: 'me', text: 'Mình đang ngồi quán cafe dùng 4G Viettel, bạn ở nhà dùng FPT đúng không?', time: '10:42 AM', status: 'read' },
+          { sender: 'them', text: 'Chuẩn luôn! Chat WebSockets xuyên mạng mượt thật, tin nhắn nhận tức thì luôn.', time: '10:42 AM', status: 'read' },
+          { sender: 'them', attachment: { type: 'file', name: 'Ke_hoach_Du_an_Q4.pdf', size: '2.4 MB' }, time: '10:43 AM', status: 'read' }
+        ]
+      },
+      {
+        id: 'c2',
+        name: 'Smart AI Assistant',
+        phone: 'ai.assistant@chat',
+        avatarBg: 'from-purple-500 to-indigo-600',
+        initials: 'AI',
+        status: 'online',
+        category: 'ai',
+        unread: 1,
+        isBlocked: false,
+        messages: [
+          { sender: 'them', text: 'Xin chào! Tôi là Trợ Lý AI Thời Gian Thực được tích hợp trực tiếp trong Chat App. Bạn có thể hỏi bất kỳ điều gì, yêu cầu tóm tắt tài liệu hoặc dịch thuật ngay tại đây!', time: '09:15 AM', status: 'read' },
+          { sender: 'me', text: 'Tóm tắt giúp mình ưu điểm của WebRTC khi gọi video qua 2 router NAT khác nhau?', time: '09:16 AM', status: 'read' },
+          { sender: 'them', text: 'Ưu điểm chính:\n1. Kết nối Peer-to-Peer trực tiếp không qua server trung gian giúp độ trễ < 80ms.\n2. Tự động dùng STUN server để tìm Public IP/Port và fallback sang TURN relay khi gặp Symmetric NAT.\n3. Tiết kiệm băng thông máy chủ và bảo mật E2E tuyệt đối.', time: '09:16 AM', status: 'read' }
+        ]
+      },
+      {
+        id: 'c3',
+        name: 'Team Dự Án Web Chat',
+        phone: 'Group (5 Thành viên)',
+        avatarBg: 'from-amber-500 to-orange-600',
+        initials: 'TD',
+        status: 'online',
+        category: 'groups',
+        unread: 3,
+        isBlocked: false,
+        messages: [
+          { sender: 'them', senderName: 'Hoàng Dev', text: 'Đã hoàn thành cấu hình Coturn Server trên VPS rồi nhé mọi người!', time: 'Hôm qua', status: 'read' },
+          { sender: 'them', senderName: 'Linh QA', text: 'Mình vừa test gọi video giữa 2 thiết bị khác mạng (Hà Nội - TP.HCM) hình ảnh rất nét.', time: '08:20 AM', status: 'read' }
+        ]
+      },
+      {
+        id: 'c4',
+        name: 'Trần Văn Long',
+        phone: '0977 888 999',
+        avatarBg: 'from-blue-600 to-indigo-700',
+        initials: 'TL',
+        status: 'offline',
+        category: 'friends',
+        unread: 0,
+        isBlocked: false,
+        messages: [
+          { sender: 'them', text: 'Tối nay 8h họp nhóm làm slide báo cáo nhé!', time: 'Thứ 2', status: 'read' },
+          { sender: 'me', text: 'Ok Long, tài liệu mình đã chuẩn bị xong.', time: 'Thứ 2', status: 'read' }
+        ]
+      },
+      {
+        id: 'c5',
+        name: 'Người Lạ (Chưa kết bạn)',
+        phone: '0903 111 222',
+        avatarBg: 'from-slate-600 to-slate-800',
+        initials: 'NL',
+        status: 'online',
+        category: 'stranger',
+        unread: 0,
+        isBlocked: false,
+        messages: [
+          { sender: 'them', text: 'Chào bạn, cho mình hỏi về dịch vụ chat với?', time: '07:30 AM', status: 'delivered' }
+        ]
+      }
+    ];
+
+    let activeContactId = 'c1';
+    let currentFilter = 'all';
+    let isAiCompanionActive = false;
+
+    // ----------------------------------------------------
+    // HELPER: GET CURRENT LOCAL TIME STRING (e.g. "10:45 AM")
+    // ----------------------------------------------------
+    function getLocalTimeString() {
+      const now = new Date();
+      return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // ----------------------------------------------------
+    // INITIALIZATION
+    // ----------------------------------------------------
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      renderContactsList();
+      renderActiveChat();
+      initHeroShowcase();
+
+      // Mobile Menu Toggle
+      const mobileBtn = document.getElementById('mobileMenuBtn');
+      const mobileMenu = document.getElementById('mobileMenu');
+      if (mobileBtn) {
+        mobileBtn.addEventListener('click', () => {
+          mobileMenu.classList.toggle('hidden');
+        });
+      }
+    });
+
+    // ----------------------------------------------------
+    // HERO SHOWCASE TABS
+    // ----------------------------------------------------
+    function initHeroShowcase() {
+      switchHeroMode('zalo');
+    }
+
+    function switchHeroMode(mode) {
+      const tabZalo = document.getElementById('heroTabZalo');
+      const tabAi = document.getElementById('heroTabAi');
+      const stream = document.getElementById('heroChatStream');
+      const avatar = document.getElementById('heroAvatar');
+      const title = document.getElementById('heroChatTitle');
+      const subtitle = document.getElementById('heroChatSubtitle');
+
+      if (mode === 'zalo') {
+        tabZalo.className = 'px-5 py-2 rounded-xl text-sm font-semibold transition-all bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md';
+        tabAi.className = 'px-5 py-2 rounded-xl text-sm font-semibold transition-all text-slate-400 hover:text-slate-200';
+        
+        avatar.className = 'w-10 h-10 rounded-full bg-gradient-to-tr from-cyan-500 to-emerald-500 flex items-center justify-center font-bold text-white text-sm';
+        avatar.textContent = 'MA';
+        title.innerHTML = `Minh Anh (0912 345 678) <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-medium">Bạn Bè</span>`;
+        subtitle.textContent = 'Đang hoạt động • Khác mạng (4G Viettel)';
+
+        stream.innerHTML = `
+          <div class="flex items-start gap-2.5">
+            <div class="w-7 h-7 rounded-full bg-cyan-600 text-white flex items-center justify-center text-xs font-bold">MA</div>
+            <div class="space-y-1 max-w-xs sm:max-w-md">
+              <div class="bg-slate-800 text-slate-200 text-xs px-3.5 py-2 rounded-2xl rounded-tl-sm">
+                Alo, bạn test tính năng gọi video WebRTC chưa?
+              </div>
+              <span class="text-[10px] text-slate-500">10:40 AM</span>
+            </div>
+          </div>
+          <div class="flex items-end justify-end gap-2">
+            <div class="space-y-1 text-right max-w-xs sm:max-w-md">
+              <div class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs px-3.5 py-2 rounded-2xl rounded-tr-sm">
+                Vừa thử xong! Mạng khác nhau vẫn kết nối direct P2P qua STUN, mượt như Zalo!
+              </div>
+              <span class="text-[10px] text-cyan-400 flex items-center justify-end gap-1">10:41 AM • <i data-lucide="check-check" class="w-3 h-3 text-cyan-400 inline"></i> Đã xem</span>
+            </div>
+          </div>
+        `;
+      } else {
+        tabAi.className = 'px-5 py-2 rounded-xl text-sm font-semibold transition-all bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-md';
+        tabZalo.className = 'px-5 py-2 rounded-xl text-sm font-semibold transition-all text-slate-400 hover:text-slate-200';
+
+        avatar.className = 'w-10 h-10 rounded-full bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center font-bold text-white text-sm';
+        avatar.innerHTML = `<i data-lucide="sparkles" class="w-5 h-5 text-white"></i>`;
+        title.innerHTML = `Smart AI Assistant <span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 font-medium">Real-Time LLM</span>`;
+        subtitle.textContent = 'Phản hồi dạng stream trực tiếp • Hỗ trợ 24/7';
+
+        stream.innerHTML = `
+          <div class="flex items-start gap-2.5">
+            <div class="w-7 h-7 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-bold">AI</div>
+            <div class="space-y-1 max-w-xs sm:max-w-md">
+              <div class="bg-slate-800 text-slate-200 text-xs px-3.5 py-2 rounded-2xl rounded-tl-sm">
+                Xin chào! Tôi có thể hỗ trợ bạn dịch thuật, viết lại tin nhắn công việc lịch sự hơn hoặc giải đáp kỹ thuật ngay trong luồng chat.
+              </div>
+              <span class="text-[10px] text-slate-500">10:40 AM</span>
+            </div>
+          </div>
+          <div class="flex items-end justify-end gap-2">
+            <div class="space-y-1 text-right max-w-xs sm:max-w-md">
+              <div class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white text-xs px-3.5 py-2 rounded-2xl rounded-tr-sm">
+                @ai Gợi ý giúp mình tin nhắn xin phép quản lý nghỉ phép chiều nay?
+              </div>
+              <span class="text-[10px] text-purple-300">10:41 AM</span>
+            </div>
+          </div>
+          <div class="flex items-start gap-2.5">
+            <div class="w-7 h-7 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-bold">AI</div>
+            <div class="space-y-1 max-w-xs sm:max-w-md">
+              <div class="bg-slate-800 text-slate-200 text-xs px-3.5 py-2 rounded-2xl rounded-tl-sm border border-purple-500/30">
+                <p class="font-semibold text-purple-300 mb-1">Gợi ý tin nhắn mẫu:</p>
+                "Em chào Anh/Chị, chiều nay em có việc gia đình đột xuất cần xử lý nên xin phép nghỉ buổi chiều. Công việc trong ngày em đã bàn giao lại cho Minh Anh hỗ trợ. Em cảm ơn Anh/Chị ạ!"
+              </div>
+              <span class="text-[10px] text-slate-500">10:41 AM • Streaming completed</span>
+            </div>
+          </div>
+        `;
+      }
+      lucide.createIcons();
+    }
+
+    // ----------------------------------------------------
+    // CONTACTS RENDERING & FILTERING
+    // ----------------------------------------------------
+    function renderContactsList() {
+      const container = document.getElementById('contactListContainer');
+      const searchVal = document.getElementById('contactSearchInput').value.toLowerCase().trim();
+
+      const filtered = CONTACTS.filter(c => {
+        const matchesCategory = 
+          currentFilter === 'all' ? true :
+          currentFilter === 'friends' ? c.category === 'friends' :
+          currentFilter === 'groups' ? c.category === 'groups' :
+          currentFilter === 'ai' ? c.category === 'ai' : true;
+
+        const matchesSearch = 
+          c.name.toLowerCase().includes(searchVal) || 
+          c.phone.toLowerCase().includes(searchVal);
+
+        return matchesCategory && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="p-6 text-center text-xs text-slate-500">
+            Không tìm thấy danh bạ phù hợp với từ khoá.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(c => {
+        const isActive = c.id === activeContactId;
+        const lastMsg = c.messages.length > 0 ? c.messages[c.messages.length - 1] : { text: 'Chưa có tin nhắn' };
+        const previewText = lastMsg.attachment ? `[Tệp đính kèm] ${lastMsg.attachment.name}` : (lastMsg.text || '');
+
+        return `
+          <div onclick="selectContact('${c.id}')" class="p-3 sm:p-3.5 cursor-pointer flex items-center gap-3 transition-colors ${isActive ? 'bg-cyan-500/15 border-l-4 border-cyan-400' : 'hover:bg-slate-900/60'}">
+            <div class="relative flex-shrink-0">
+              <div class="w-11 h-11 rounded-full bg-gradient-to-tr ${c.avatarBg} flex items-center justify-center font-bold text-white text-xs shadow">
+                ${c.initials}
+              </div>
+              ${c.status === 'online' ? '<span class="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-950"></span>' : ''}
+            </div>
+            
+            <div class="flex-grow min-w-0">
+              <div class="flex items-center justify-between mb-0.5">
+                <h4 class="text-xs sm:text-sm font-semibold truncate ${isActive ? 'text-cyan-300' : 'text-slate-200'}">
+                  ${c.name}
+                  ${c.isBlocked ? '<span class="text-[9px] text-rose-400 font-bold ml-1">[Đã chặn]</span>' : ''}
+                </h4>
+                <span class="text-[10px] text-slate-500 flex-shrink-0">${lastMsg.time || ''}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <p class="text-[11px] text-slate-400 truncate pr-2">${previewText}</p>
+                ${c.unread > 0 ? `<span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500 text-white">${c.unread}</span>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+    }
+
+    function selectContact(id) {
+      activeContactId = id;
+      const contact = CONTACTS.find(c => c.id === id);
+      if (contact) {
+        contact.unread = 0;
+      }
+      renderContactsList();
+      renderActiveChat();
+    }
+
+    function filterContacts(val) {
+      renderContactsList();
+    }
+
+    function setFilterCategory(category) {
+      currentFilter = category;
+      ['all', 'friends', 'groups', 'ai'].forEach(cat => {
+        const pill = document.getElementById(`pill-${cat}`);
+        if (cat === category) {
+          pill.className = "text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30";
+        } else {
+          pill.className = "text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-slate-900 text-slate-400 hover:text-white border border-slate-800";
+        }
+      });
+      renderContactsList();
+    }
+
+    // ----------------------------------------------------
+    // CHAT WINDOW RENDERING
+    // ----------------------------------------------------
+    function renderActiveChat() {
+      const contact = CONTACTS.find(c => c.id === activeContactId) || CONTACTS[0];
+      
+      // Update Chat Header
+      document.getElementById('activeChatName').textContent = contact.name;
+      document.getElementById('activeChatPhone').textContent = `SĐT: ${contact.phone}`;
+      document.getElementById('activeChatAvatar').textContent = contact.initials;
+      document.getElementById('activeChatAvatar').className = `w-11 h-11 rounded-full bg-gradient-to-tr ${contact.avatarBg} flex items-center justify-center font-bold text-white text-sm shadow`;
+      
+      const statusDot = document.getElementById('activeChatStatusDot');
+      statusDot.className = contact.status === 'online' 
+        ? "absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-slate-900"
+        : "absolute bottom-0 right-0 w-3 h-3 rounded-full bg-slate-600 border-2 border-slate-900";
+
+      const badge = document.getElementById('activeChatBadge');
+      badge.textContent = contact.category === 'ai' ? 'Trợ Lý AI' : contact.category === 'groups' ? 'Nhóm Chat' : contact.category === 'stranger' ? 'Người Lạ' : 'Bạn Bè';
+
+      // Blocked state handling
+      const blockedBanner = document.getElementById('blockedBanner');
+      const chatInputBar = document.getElementById('chatInputBar');
+      const blockBtn = document.getElementById('blockContactBtn');
+      
+      if (contact.isBlocked) {
+        blockedBanner.classList.remove('hidden');
+        chatInputBar.classList.add('opacity-40', 'pointer-events-none');
+        blockBtn.classList.add('text-rose-500');
+        blockBtn.setAttribute('title', 'Bỏ chặn');
+      } else {
+        blockedBanner.classList.add('hidden');
+        chatInputBar.classList.remove('opacity-40', 'pointer-events-none');
+        blockBtn.classList.remove('text-rose-500');
+        blockBtn.setAttribute('title', 'Chặn người này');
+      }
+
+      // Render Messages
+      const container = document.getElementById('messagesContainer');
+      container.innerHTML = contact.messages.map(msg => {
+        if (msg.sender === 'me') {
+          return `
+            <div class="flex items-end justify-end gap-2">
+              <div class="space-y-1 text-right max-w-sm sm:max-w-md">
+                <div class="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs sm:text-sm px-4 py-2.5 rounded-2xl rounded-tr-sm shadow-md">
+                  ${msg.text ? `<p class="whitespace-pre-line text-left">${escapeHtml(msg.text)}</p>` : ''}
+                  ${renderAttachmentPreview(msg.attachment)}
+                </div>
+                <div class="flex items-center justify-end gap-1.5 text-[10px] text-cyan-300">
+                  <span>${msg.time}</span>
+                  ${msg.status === 'read' ? '<i data-lucide="check-check" class="w-3.5 h-3.5 text-cyan-300 inline"></i>' : '<i data-lucide="check" class="w-3.5 h-3.5 text-slate-400 inline"></i>'}
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="flex items-start gap-2.5">
+              <div class="w-8 h-8 rounded-full bg-gradient-to-tr ${contact.avatarBg} text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+                ${contact.initials}
+              </div>
+              <div class="space-y-1 max-w-sm sm:max-w-md">
+                ${msg.senderName ? `<div class="text-[10px] font-bold text-slate-400 ml-1">${msg.senderName}</div>` : ''}
+                <div class="bg-slate-800 text-slate-200 text-xs sm:text-sm px-4 py-2.5 rounded-2xl rounded-tl-sm border border-slate-700/60 shadow">
+                  ${msg.text ? `<p class="whitespace-pre-line">${escapeHtml(msg.text)}</p>` : ''}
+                  ${renderAttachmentPreview(msg.attachment)}
+                </div>
+                <div class="text-[10px] text-slate-500 ml-1">${msg.time}</div>
+              </div>
+            </div>
+          `;
+        }
+      }).join('');
+
+      lucide.createIcons();
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function renderAttachmentPreview(att) {
+      if (!att) return '';
+      if (att.type === 'file') {
+        return `
+          <div class="mt-2 p-2.5 rounded-xl bg-slate-900/60 border border-slate-700/80 flex items-center gap-3 text-left">
+            <div class="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center flex-shrink-0">
+              <i data-lucide="file-text" class="w-4 h-4"></i>
+            </div>
+            <div class="min-w-0">
+              <div class="text-xs font-semibold text-white truncate">${escapeHtml(att.name)}</div>
+              <div class="text-[10px] text-slate-400">${att.size} • Sẵn sàng tải xuống</div>
+            </div>
+          </div>
+        `;
+      } else if (att.type === 'image') {
+        return `
+          <div class="mt-2 rounded-xl overflow-hidden border border-slate-700/80 bg-slate-900">
+            <img src="${att.url}" alt="Attachment" class="w-full max-h-48 object-cover" />
+            <div class="p-1.5 text-[10px] text-slate-400">${att.name}</div>
+          </div>
+        `;
+      }
+      return '';
+    }
+
+    // ----------------------------------------------------
+    // SENDING MESSAGE ACTION (WITH REAL LOCAL TIMESTAMPS)
+    // ----------------------------------------------------
+    function handleSendMessage(e) {
+      e.preventDefault();
+      const input = document.getElementById('messageTextInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const contact = CONTACTS.find(c => c.id === activeContactId);
+      if (!contact || contact.isBlocked) return;
+
+      const newMsg = {
+        sender: 'me',
+        text: text,
+        time: getLocalTimeString(),
+        status: 'delivered'
+      };
+
+      contact.messages.push(newMsg);
+      input.value = '';
+      renderActiveChat();
+      renderContactsList();
+
+      // Check if message mentions AI or contact is AI Assistant
+      const isDirectAiContact = contact.category === 'ai';
+      const asksAiInline = text.toLowerCase().startsWith('@ai') || text.toLowerCase().startsWith('/ai') || isAiCompanionActive;
+
+      if (isDirectAiContact || asksAiInline) {
+        simulateAiResponse(text, isDirectAiContact ? contact : null);
+      } else {
+        // Normal peer response simulation
+        simulatePeerReply(contact);
+      }
+    }
+
+    function simulatePeerReply(contact) {
+      showTypingIndicator(`${contact.name} đang soạn tin nhắn...`);
+      setTimeout(() => {
+        hideTypingIndicator();
+        contact.messages.push({
+          sender: 'them',
+          text: `Đã nhận được tin nhắn của bạn lúc ${getLocalTimeString()}! Hệ thống WebSockets hoạt động rất ổn định.`,
+          time: getLocalTimeString(),
+          status: 'read'
+        });
+        // Mark previous 'me' message as read
+        const myLastMsg = contact.messages.filter(m => m.sender === 'me').pop();
+        if (myLastMsg) myLastMsg.status = 'read';
+
+        renderActiveChat();
+        renderContactsList();
+      }, 1500);
+    }
+
+    function simulateAiResponse(userPrompt, directContact) {
+      showTypingIndicator("AI Assistant đang suy nghĩ và tổng hợp dữ liệu...");
+      
+      setTimeout(() => {
+        hideTypingIndicator();
+        const aiReply = `[Phản hồi từ AI Assistant lúc ${getLocalTimeString()}]:\nTôi đã ghi nhận yêu cầu: "${userPrompt.replace(/@ai|\/ai/gi, '').trim()}".\n\nTrong kiến trúc Chat App, các câu hỏi AI được xử lý qua Streaming Pipeline (OpenAI/Gemini SSE) trả từng token trực tiếp về client qua kết nối socket, đảm bảo người dùng thấy kết quả ngay tức khắc.`;
+
+        if (directContact) {
+          directContact.messages.push({
+            sender: 'them',
+            text: aiReply,
+            time: getLocalTimeString(),
+            status: 'read'
+          });
+        } else {
+          // Send as assistant helper bubble inside existing thread
+          const activeC = CONTACTS.find(c => c.id === activeContactId);
+          activeC.messages.push({
+            sender: 'them',
+            senderName: 'Smart AI Companion (In-Thread)',
+            text: aiReply,
+            time: getLocalTimeString(),
+            status: 'read'
+          });
+        }
+
+        renderActiveChat();
+        renderContactsList();
+      }, 2000);
+    }
+
+    function showTypingIndicator(text) {
+      const el = document.getElementById('typingIndicator');
+      const textEl = document.getElementById('typingIndicatorText');
+      textEl.textContent = text;
+      el.classList.remove('hidden');
+      const container = document.getElementById('messagesContainer');
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function hideTypingIndicator() {
+      document.getElementById('typingIndicator').classList.add('hidden');
+    }
+
+    // ----------------------------------------------------
+    // AI COMPANION TOGGLE
+    // ----------------------------------------------------
+    function toggleChatAiAssistant() {
+      isAiCompanionActive = !isAiCompanionActive;
+      const btn = document.getElementById('toggleAiCompanionBtn');
+      const label = document.getElementById('aiToggleLabel');
+
+      if (isAiCompanionActive) {
+        btn.classList.add('bg-cyan-500/20', 'border-cyan-400', 'text-cyan-300');
+        label.textContent = "AI Đang Hỗ Trợ (Bật)";
+        alert("Chế độ AI Đồng Hành đã bật! Mọi tin nhắn bạn gửi trong đoạn hội thoại này sẽ được AI hỗ trợ phản hồi hoặc phân tích song song.");
+      } else {
+        btn.classList.remove('bg-cyan-500/20', 'border-cyan-400', 'text-cyan-300');
+        label.textContent = "Bật AI Hỗ Trợ";
+      }
+    }
+
+    // ----------------------------------------------------
+    // BLOCK / UNBLOCK STRANGER
+    // ----------------------------------------------------
+    function toggleBlockContact() {
+      const contact = CONTACTS.find(c => c.id === activeContactId);
+      if (!contact) return;
+
+      contact.isBlocked = !contact.isBlocked;
+      renderActiveChat();
+      renderContactsList();
+
+      if (contact.isBlocked) {
+        alert(`Bạn đã chặn người dùng "${contact.name}". Người này sẽ không thể gửi tin nhắn hoặc gọi điện cho bạn.`);
+      } else {
+        alert(`Đã bỏ chặn người dùng "${contact.name}".`);
+      }
+    }
+
+    // ----------------------------------------------------
+    // WEBRTC CALL SIMULATION
+    // ----------------------------------------------------
+    function triggerCallSimulation(type) {
+      const contact = CONTACTS.find(c => c.id === activeContactId);
+      if (!contact || contact.isBlocked) {
+        alert("Không thể thực hiện cuộc gọi cho người dùng bị chặn!");
+        return;
+      }
+
+      const modal = document.getElementById('callModal');
+      document.getElementById('callModalName').textContent = contact.name;
+      document.getElementById('callModalAvatar').textContent = contact.initials;
+      document.getElementById('callModalType').textContent = type === 'video' 
+        ? "Đang khởi tạo cuộc gọi Video HD WebRTC (Peer-to-Peer)..." 
+        : "Đang khởi tạo cuộc gọi Thoại chất lượng cao (Opus 48kHz)...";
+
+      modal.classList.remove('hidden');
+    }
+
+    function endCallSimulation() {
+      document.getElementById('callModal').classList.add('hidden');
+    }
+
+    function toggleCallMute() {
+      const btn = document.getElementById('callMuteBtn');
+      btn.classList.toggle('bg-rose-600');
+      btn.classList.toggle('text-white');
+    }
+
+    // ----------------------------------------------------
+    // ATTACHMENT & EMOJI DEMO
+    // ----------------------------------------------------
+    function sendAttachmentDemo(type) {
+      const contact = CONTACTS.find(c => c.id === activeContactId);
+      if (!contact || contact.isBlocked) return;
+
+      if (type === 'file') {
+        contact.messages.push({
+          sender: 'me',
+          attachment: {
+            type: 'file',
+            name: 'Kien_truc_Chat_App_v2.docx',
+            size: '1.8 MB'
+          },
+          time: getLocalTimeString(),
+          status: 'delivered'
+        });
+      } else if (type === 'image') {
+        contact.messages.push({
+          sender: 'me',
+          attachment: {
+            type: 'image',
+            name: 'screenshot_demo.png',
+            url: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80'
+          },
+          time: getLocalTimeString(),
+          status: 'delivered'
+        });
+      }
+
+      renderActiveChat();
+      renderContactsList();
+    }
+
+    function insertEmojiDemo() {
+      const input = document.getElementById('messageTextInput');
+      const emojis = ['🚀', '✨', '🔥', '👍', '❤️', '🎉', '😊'];
+      const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+      input.value += randomEmoji;
+      input.focus();
+    }
+
+    function promptAddFriend() {
+      const phone = prompt("Nhập số điện thoại bạn muốn kết bạn (phong cách Zalo, ví dụ: 0987654321):");
+      if (phone) {
+        CONTACTS.push({
+          id: 'c_' + Date.now(),
+          name: `Bạn mới (${phone.slice(-4)})`,
+          phone: phone,
+          avatarBg: 'from-emerald-500 to-teal-600',
+          initials: 'BM',
+          status: 'online',
+          category: 'friends',
+          unread: 0,
+          isBlocked: false,
+          messages: [
+            { sender: 'them', text: 'Chào bạn! Mình vừa đồng ý lời mời kết bạn.', time: getLocalTimeString(), status: 'read' }
+          ]
+        });
+        renderContactsList();
+        alert(`Đã gửi lời mời và kết nối thành công với số ${phone}!`);
+      }
+    }
+
+    // ----------------------------------------------------
+    // AUTH MODAL LOGIC
+    // ----------------------------------------------------
+    function openAuthModal(type) {
+      document.getElementById('authModalTitle').textContent = type === 'signin' ? 'Đăng Nhập Chat App' : 'Tạo Tài Khoản Mới';
+      document.getElementById('authModal').classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+      document.getElementById('authModal').classList.add('hidden');
+    }
+
+    function handleAuthSubmit(e) {
+      e.preventDefault();
+      closeAuthModal();
+      alert("Đăng nhập thành công! Chào mừng bạn quay trở lại Chat App.");
+    }
+
+    function notifySettingChange(settingName) {
+      const toast = document.getElementById('settingToast');
+      toast.textContent = `Đã cập nhật cài đặt: "${settingName}"`;
+      toast.classList.remove('hidden');
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 2500);
+    }
+
+    // Helper sanitization
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
