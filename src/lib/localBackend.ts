@@ -94,6 +94,7 @@ function loadDatabase() {
       }
       if (data.friendships) friendships = new Set(data.friendships);
       if (data.conversations) conversations = new Map(Object.entries(data.conversations));
+      if (data.geminiApiKey) (globalThis as any).geminiApiKey = data.geminiApiKey;
       console.log(`[Database] Đã nạp thành công ${users.size} tài khoản, ${friendships.size} mối quan hệ bạn bè từ ổ đĩa.`);
     }
   } catch (err) {
@@ -110,6 +111,7 @@ function saveDatabase() {
       friendRequests,
       friendships: Array.from(friendships),
       conversations: Object.fromEntries(conversations),
+      geminiApiKey: (globalThis as any).geminiApiKey || process.env.VITE_GEMINI_API_KEY || '',
     };
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
@@ -780,6 +782,27 @@ export function createLocalBackendMiddleware() {
       if (userId) userAudioQueue.set(userId, []); // Đã lấy thì xóa
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ chunks }));
+      return;
+    }
+
+    // 16. Lưu & Lấy Gemini API Key toàn cục cho mọi thiết bị
+    if (path === '/settings/gemini-key' && req.method === 'POST') {
+      const body = await parseBody(req);
+      if (body.key && typeof body.key === 'string') {
+        const cleanKey = body.key.trim();
+        (globalThis as any).geminiApiKey = cleanKey;
+        process.env.VITE_GEMINI_API_KEY = cleanKey;
+        saveDatabase();
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok: true, success: true }));
+      return;
+    }
+
+    if (path === '/settings/gemini-key' && req.method === 'GET') {
+      const key = (globalThis as any).geminiApiKey || process.env.VITE_GEMINI_API_KEY || '';
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ key }));
       return;
     }
 
