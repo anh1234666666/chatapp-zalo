@@ -1,7 +1,7 @@
 /**
  * Gemini AI & Universal Intelligent Assistant Service
  * Hỗ trợ tự động kết nối mô hình Google Gemini 1.5 Flash chính hãng
- * Sẵn sàng hoạt động qua API Key linh hoạt (nhập trực tiếp trên web hoặc biến môi trường)
+ * Chuẩn hóa 100% định dạng hội thoại nhiều lượt (Multi-turn chat) theo đúng chuẩn Google
  */
 
 export interface MessageHistory {
@@ -9,7 +9,6 @@ export interface MessageHistory {
   parts: { text: string }[];
 }
 
-// Lưu trữ bộ nhớ đệm API Key trên client
 let cachedApiKey = '';
 
 export function getActiveGeminiKey(): string {
@@ -28,7 +27,6 @@ export function setActiveGeminiKey(key: string) {
   cachedApiKey = key.trim();
   if (typeof window !== 'undefined') {
     localStorage.setItem('GEMINI_API_KEY', cachedApiKey);
-    // Đồng bộ lên server để lưu vào database
     fetch('/api/local/settings/gemini-key', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -37,11 +35,11 @@ export function setActiveGeminiKey(key: string) {
   }
 }
 
-// Hàm giả lập gõ chữ mượt mà (Typewriter streaming)
+// Giả lập gõ chữ mượt mà
 async function streamTextGradually(
   fullText: string,
   onChunk: (chunk: string) => void,
-  intervalMs = 8
+  intervalMs = 6
 ): Promise<string> {
   const words = fullText.split(' ');
   let current = '';
@@ -53,7 +51,7 @@ async function streamTextGradually(
   return fullText;
 }
 
-// Xử lý thông minh các câu hỏi về Thời gian, Lịch, Ngày tháng thực tế
+// Xử lý thông minh các câu hỏi về Ngày / Giờ thực tế
 function handleDateTimeQuery(lowerPrompt: string): string | null {
   const isDateQuery =
     (lowerPrompt.includes('hôm nay') || lowerPrompt.includes('ngày') || lowerPrompt.includes('tháng') || lowerPrompt.includes('năm') || lowerPrompt.includes('thứ')) &&
@@ -82,135 +80,54 @@ function handleDateTimeQuery(lowerPrompt: string): string | null {
   return null;
 }
 
-// Bộ não kiến thức chuyên sâu giải đáp các chủ đề phổ biến
-function generateComprehensiveResponse(prompt: string): string {
-  const p = prompt.toLowerCase();
+/**
+ * CHUẨN HÓA LỊCH SỬ CHAT CHO GOOGLE GEMINI API
+ * 1. Lượt đầu tiên BẮT BUỘC phải là role 'user' (bỏ qua lời chào ban đầu của bot)
+ * 2. Các lượt tiếp theo phải xen kẽ nghiêm ngặt 'user' -> 'model' -> 'user' -> 'model'
+ * 3. Không được chứa text rỗng
+ */
+function buildGeminiContents(
+  history: { role: string; content: string }[],
+  prompt: string
+): MessageHistory[] {
+  const contents: MessageHistory[] = [];
 
-  // 1. CHỦ ĐỀ TOÁN HỌC: SỐ THỰC
-  if (p.includes('số thực') || p.includes('so thuc')) {
-    return `### 📐 SỐ THỰC LÀ GÌ? ĐỊNH NGHĨA VÀ TÍNH CHẤT CHI TIẾT
+  // Lọc lấy các tin nhắn có nội dung hợp lệ
+  const validHistory = history.filter(
+    (h) => h.content && typeof h.content === 'string' && h.content.trim().length > 0
+  );
 
-Trong Toán học, **Số thực (ký hiệu là $\\mathbb{R}$ - viết tắt của Real Numbers)** là tập hợp bao gồm tất cả các số có thể biểu diễn được trên một trục số liên tục.
+  for (const item of validHistory) {
+    const role: 'user' | 'model' =
+      item.role === 'assistant' || item.role === 'model' ? 'model' : 'user';
 
----
+    // Bỏ qua tin nhắn bot chào đầu tiên để lượt đầu luôn là 'user'
+    if (contents.length === 0 && role === 'model') {
+      continue;
+    }
 
-#### 1. Cấu tạo của tập hợp số thực ($\mathbb{R}$):
-Số thực là sự hợp nhất của hai tập hợp lớn:
-* **Số hữu tỉ ($\mathbb{Q}$)**: Là các số có thể viết dưới dạng phân số $\\frac{a}{b}$ (với $a, b \\in \\mathbb{Z}, b \\neq 0$). Bao gồm:
-  - **Số tự nhiên ($\mathbb{N}$)**: $0, 1, 2, 3, 4,...$
-  - **Số nguyên ($\mathbb{Z}$)**: $... -3, -2, -1, 0, 1, 2, 3,...$
-  - **Số thập phân hữu hạn**: $0.5, 1.25, -3.75,...$
-  - **Số thập phân vô hạn tuần hoàn**: $0.333... = \\frac{1}{3}; 0.1666... = \\frac{1}{6}$
-* **Số vô tỉ ($\mathbb{I}$)**: Là các số thập phân vô hạn không tuần hoàn, không thể biểu diễn dưới dạng phân số đơn giản. Ví dụ:
-  - Căn bậc hai của các số không chính phương: $\\sqrt{2} \\approx 1.414213...$, $\\sqrt{3} \\approx 1.732...$
-  - Số $\\pi$ (Pi): $3.14159265...$
-  - Số $e$ (hằng số Euler): $2.71828...$
-
-$$\\mathbb{R} = \\mathbb{Q} \\cup \\mathbb{I}$$
-
----
-
-#### 2. Biểu diễn trên trục số:
-* Mỗi một số thực tương ứng với **duy nhất một điểm** trên trục số và ngược lại, mỗi điểm trên trục số biểu diễn một số thực duy nhất.
-* Trục số thực là một đường thẳng liên tục kéo dài từ âm vô cực ($-\\infty$) đến dương vô cực ($+\\infty$).
-
-#### 3. Các tính chất quan trọng:
-* **Tính thứ tự**: Với hai số thực $a$ và $b$ bất kỳ, luôn xảy ra một trong ba trường hợp: $a > b$, $a = b$ hoặc $a < b$.
-* **Các phép toán cơ bản**: Giao hoán, kết hợp và phân phối đối với phép cộng và phép nhân.
-* **Tính trù mật**: Giữa hai số thực bất kỳ luôn tồn tại vô số số thực khác.
-
-*(Lưu ý: Ngược lại với số thực là **Số phức**, có chứa đơn vị ảo $i$ với $i^2 = -1$).*`;
+    // Nếu bị trùng role liên tiếp, gộp text lại
+    if (contents.length > 0 && contents[contents.length - 1].role === role) {
+      contents[contents.length - 1].parts[0].text += '\n' + item.content.trim();
+    } else {
+      contents.push({
+        role,
+        parts: [{ text: item.content.trim() }],
+      });
+    }
   }
 
-  // 2. CHỦ ĐỀ VẬT LÝ & TOÁN HỌC: NEWTON
-  if (p.includes('newton') || p.includes('niu-tơn') || p.includes('niuton')) {
-    return `### ⚡ TỔNG HỢP KIẾN THỨC VỀ ĐỊNH LUẬT & ĐỊNH LÝ NEWTON
-
-Nhà bác học vĩ đại **Sir Isaac Newton** đã để lại những cống hiến khổng lồ làm thay đổi lịch sử khoa học nhân loại, tiêu biểu nhất ở cả **Vật lý** và **Toán học**:
-
----
-
-### A. BA ĐỊNH LUẬT CHUYỂN ĐỘNG NEWTON (VẬT LÝ KINH ĐIỂN)
-
-#### 1. Định luật I Newton (Định luật Quán tính):
-> *"Một vật nếu không chịu tác dụng của lực nào hoặc chịu tác dụng của các lực có hợp lực bằng không, thì vật đang đứng yên sẽ tiếp tục đứng yên, vật đang chuyển động sẽ tiếp tục chuyển động thẳng đều."*
-- **Ý nghĩa**: Mọi vật đều có xu hướng bảo toàn vận tốc của mình (quán tính).
-
-#### 2. Định luật II Newton (Định luật cơ bản của Cơ học):
-> *"Gia tốc của một vật cùng hướng với lực tác dụng lên vật. Độ lớn của gia tốc tỉ lệ thuận với độ lớn của lực và tỉ lệ nghịch với khối lượng của vật."*
-$$\\vec{F} = m \\cdot \\vec{a} \\quad \\text{hay} \\quad \\vec{a} = \\frac{\\vec{F}}{m}$$
-- Trong đó: $F$ là lực tác dụng (N), $m$ là khối lượng vật (kg), $a$ là gia tốc ($m/s^2$).
-
-#### 3. Định luật III Newton (Định luật Tác dụng & Phản tác dụng):
-> *"Trong mọi trường hợp, khi vật A tác dụng lên vật B một lực, thì vật B cũng tác dụng lại vật A một lực. Hai lực này cùng độ lớn, cùng phương nhưng ngược chiều."*
-$$\\vec{F}_{AB} = -\\vec{F}_{BA}$$
-
----
-
-### B. ĐỊNH LUẬT VẠN VẬT HẤP DẪN NEWTON
-Mọi vật thể trong vũ trụ đều hút nhau với một lực hấp dẫn tỉ lệ thuận với tích khối lượng của chúng và tỉ lệ nghịch với bình phương khoảng cách giữa tâm của chúng:
-$$F_{hd} = G \\frac{m_1 m_2}{r^2}$$
-*(Với $G \\approx 6.674 \\times 10^{-11} \\, \\text{N}\\cdot\\text{m}^2/\\text{kg}^2$ là hằng số hấp dẫn).*
-
----
-
-### C. ĐỊNH LÝ NHỊ THỨC NEWTON (TOÁN HỌC)
-Công thức khai triển lũy thừa bậc $n$ của một nhị thức $(a + b)$:
-$$(a + b)^n = \\sum_{k=0}^{n} C_n^k a^{n-k} b^k = C_n^0 a^n + C_n^1 a^{n-1}b + ... + C_n^n b^n$$`;
+  // Thêm câu hỏi hiện tại của user vào cuối
+  if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
+    contents[contents.length - 1].parts[0].text += '\n' + prompt.trim();
+  } else {
+    contents.push({
+      role: 'user',
+      parts: [{ text: prompt.trim() }],
+    });
   }
 
-  // 3. CHỦ ĐỀ VĂN HỌC: NHÀ VĂN NAM CAO
-  if (p.includes('nam cao') || (p.includes('bài văn') && (p.includes('nhà văn') || p.includes('chí phèo') || p.includes('lão hạc')))) {
-    return `### 📖 BÀI VĂN KHẮC HỌA CHÂN DUNG VÀ PHONG CÁCH NHÀ VĂN NAM CAO
-
-**Mở bài:**
-Trong nền văn học hiện thực phê phán Việt Nam giai đoạn 1930 - 1945, Nam Cao sừng sững như một tượng đài lớn, một cây bút nhân đạo sâu sắc và tài năng bậc thầy. Ông là nhà văn của những kiếp đời lầm than, của những người nông dân bị bần cùng hóa và người trí thức nghèo sống mòn mỏi trong xã hội cũ. Nhắc đến Nam Cao, người đọc không chỉ nhớ đến những trang viết sắc lạnh mà chân thực, mà còn xúc động trước một trái tim luôn trăn trở, xót thương cho phẩm giá con người.
-
-**Thân bài:**
-1. **Chân dung con người và tư chất nghệ sĩ:**
-   - Nam Cao (tên khai sinh là Trần Hữu Tri, 1915 – 1951), sinh ra tại làng Đại Hoàng, phủ Lý Nhân, tỉnh Hà Nam – vùng quê nghèo đã trở thành cái nôi nuôi dưỡng những tác phẩm bất hủ của ông.
-   - Về ngoại hình và tính cách, Nam Cao là người có vẻ ngoài điềm tĩnh, ít nói, giản dị và khiêm nhường. Đằng sau đôi mắt trầm buồn ấy lại là một thế giới nội tâm vô cùng phong phú, nhạy cảm với nỗi đau của tha nhân và luôn tự vấn, nghiêm khắc với chính mình.
-
-2. **Quan điểm nghệ thuật tiến bộ:**
-   - Nam Cao quan niệm nghệ thuật chân chính phải gắn liền với cuộc đời: *"Nghệ thuật không cần phải là ánh trăng lừa dối, nghệ thuật không nên là ánh trăng lừa dối; nghệ thuật chỉ có thể là tiếng đau khổ kia thoát ra từ những kiếp lầm than"* (*Trăng sáng*).
-   - Ông đòi hỏi người nghệ sĩ phải có cái tâm sâu sắc và sự sáng tạo không ngừng: *"Văn chương không cần đến những người thợ khéo tay làm theo một vài kiểu mẫu đưa cho. Văn chương chỉ dung nạp những người biết đào sâu, biết tìm tòi, khơi những nguồn chưa ai khơi và sáng tạo những cái gì chưa có"* (*Đời thừa*).
-
-3. **Hai mảng đề tài xuất sắc:**
-   - **Người nông dân nghèo trước Cách mạng**: Qua *Chí Phèo*, *Lão Hạc*, *Một bữa no*,... Nam Cao không chỉ phơi bày bi kịch đói nghèo, bị đẩy vào bước đường lưu manh hóa mà quan trọng hơn, ông phát hiện và ngợi ca đốm sáng lương tri, lòng tự trọng cao quý lấp lánh trong những tâm hồn đau khổ.
-   - **Người trí thức tiểu tư sản nghèo**: Qua *Đời thừa*, *Trăng sáng*, *Sống mòn*, ông miêu tả sâu sắc bi kịch "chết mòn" về tinh thần – những trí thức có hoài bão lớn nhưng bị gánh nặng áo cơm ghì sát đất, phải vật lộn giữa sự tha hóa và giữ gìn nhân cách.
-
-**Kết bài:**
-Nam Cao đã hy sinh anh dũng trên đường đi công tác năm 1951. Dù cuộc đời ngắn ngủi, di sản văn học mà ông để lại mãi mãi là đỉnh cao chói lọi của chủ nghĩa hiện thực Việt Nam, dạy cho ta bài học muôn đời về lòng trắc ẩn và sự nâng niu nhân phẩm con người.`;
-  }
-
-  // 4. CHỦ ĐỀ CHÀO HỎI & GIỚI THIỆU BẢN THÂN
-  if (p.includes('chào') || p.includes('hello') || p.includes('hi') || p.includes('bạn là ai') || p.includes('tên gì')) {
-    return `Xin chào bạn! Tôi là **Trợ lý Trí Tuệ Nhân Tạo (Gemini AI)** của Chat App. 😊
-
-Tôi luôn sẵn sàng giải đáp và hỗ trợ bạn 24/7 trong mọi lĩnh vực:
-* 📐 **Toán học & Khoa học Tự nhiên**: Đại số, hình học, vật lý, hóa học.
-* 📝 **Văn học & Soạn thảo**: Viết văn mẫu, làm thơ, soạn thảo thư từ, phân tích tác phẩm.
-* 💻 **Công nghệ & Lập trình**: Lập trình Web, React, TypeScript, Python, thuật toán.
-* 💬 **Hỏi đáp kiến thức tổng quát**: Lịch sử, địa lý, tiếng Anh và đời sống.
-
-Bạn có câu hỏi nào cần giải đáp ngay không? Hãy nhập câu hỏi bên dưới nhé!`;
-  }
-
-  // 5. CÂU HỎI TỔNG QUÁT: PHÂN TÍCH VÀ TRẢ LỜI TRỰC DIỆN
-  return `### 💡 GIẢI ĐÁP CHI TIẾT CHO CÂU HỎI CỦA BẠN:
-
-Về câu hỏi: **"${prompt}"**
-
-1. **Khái niệm & Bản chất:**
-   - Đây là một chủ đề quan trọng thường được tìm hiểu trong học tập và ứng dụng thực tế.
-   - Bản chất của vấn đề dựa trên các nguyên lý khoa học và thực tiễn đã được kiểm chứng.
-
-2. **Các khía cạnh trọng tâm:**
-   - **Định nghĩa**: Giúp phân biệt rõ ràng đối tượng được nhắc đến với các khái niệm tương đương.
-   - **Ý nghĩa & Ứng dụng**: Áp dụng trực tiếp vào việc giải quyết bài toán, tối ưu hóa công việc hoặc giải thích các hiện tượng xung quanh chúng ta.
-
-3. **Gợi ý tiếp theo:**
-   Nếu bạn muốn tôi đi sâu vào công thức chi tiết, giải thích bằng ví dụ cụ thể hơn hoặc viết code minh họa, hãy nhắn lại cho tôi nhé!`;
+  return contents;
 }
 
 export async function streamGeminiAI(
@@ -221,13 +138,13 @@ export async function streamGeminiAI(
   const cleanPrompt = prompt.trim();
   const lowerPrompt = cleanPrompt.toLowerCase();
 
-  // 1. Kiểm tra ưu tiên: Câu hỏi về Ngày / Giờ thực tế
+  // 1. Kiểm tra Ngày / Giờ thực tế
   const dateAnswer = handleDateTimeQuery(lowerPrompt);
   if (dateAnswer) {
-    return await streamTextGradually(dateAnswer, onChunk, 10);
+    return await streamTextGradually(dateAnswer, onChunk, 8);
   }
 
-  // 2. Lấy API Key từ LocalStorage, Environment hoặc Server
+  // 2. Lấy API Key
   let apiKey = getActiveGeminiKey();
   if (!apiKey) {
     try {
@@ -242,29 +159,22 @@ export async function streamGeminiAI(
     } catch {}
   }
 
-  // 3. Nếu ĐÃ CÓ GEMINI API KEY -> GỌI GOOGLE GEMINI 1.5 FLASH TRỰC TIẾP! (THÔNG MINH 100%)
+  // 3. GỌI GOOGLE GEMINI 1.5 FLASH CHÍNH HÃNG VỚI MULTI-TURN CHUẨN
   if (apiKey && apiKey.length > 15 && apiKey !== 'your-gemini-api-key-here') {
     try {
-      const contents: MessageHistory[] = history.slice(-8).map((msg) => ({
-        role: msg.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: msg.content }],
-      }));
+      const contents = buildGeminiContents(history, cleanPrompt);
 
-      contents.push({
-        role: 'user',
-        parts: [{ text: cleanPrompt }],
-      });
+      // Thử gọi Streaming API trước
+      const streamUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=${apiKey}&alt=sse`;
 
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?key=${apiKey}&alt=sse`;
-
-      const response = await fetch(url, {
+      const response = await fetch(streamUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents,
           generationConfig: {
             temperature: 0.7,
-            maxOutputTokens: 2048,
+            maxOutputTokens: 3000,
           },
         }),
       });
@@ -303,12 +213,42 @@ export async function streamGeminiAI(
           return fullResponse;
         }
       }
-    } catch (geminiErr) {
-      console.warn('Gemini API call error:', geminiErr);
+
+      // Fallback: Nếu stream gặp lỗi hoặc proxy chặn SSE, gọi trực tiếp standard endpoint
+      const directUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      const directRes = await fetch(directUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents }),
+      });
+
+      if (directRes.ok) {
+        const directData = await directRes.json();
+        const text = directData?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text && text.trim().length > 0) {
+          return await streamTextGradually(text.trim(), onChunk, 6);
+        }
+      } else {
+        const errData = await directRes.json().catch(() => ({}));
+        console.warn('Gemini API Error details:', errData);
+        if (errData?.error?.message) {
+          const errNotice = `⚠️ Google Gemini thông báo: ${errData.error.message}\n\nVui lòng kiểm tra lại mã API Key của bạn bằng cách bấm vào nút "Cài đặt Gemini Key" ở góc trên bên phải.`;
+          onChunk(errNotice);
+          return errNotice;
+        }
+      }
+    } catch (geminiErr: any) {
+      console.error('Lỗi kết nối Gemini API:', geminiErr);
     }
   }
 
-  // 4. Nếu chưa có API Key hoặc mạng lỗi, sử dụng Bộ não Kiến thức chuyên sâu
-  const responseText = generateComprehensiveResponse(cleanPrompt);
-  return await streamTextGradually(responseText, onChunk, 8);
+  // 4. Nếu chưa cài đặt API Key, hiển thị hướng dẫn thân thiện và rõ ràng
+  const keyNotice = `Chào bạn! Tôi là **Trợ lý Trí Tuệ Nhân Tạo (Google Gemini AI)** của Chat App.\n\n` +
+    `Để tôi có thể trực tiếp giải đáp mọi câu hỏi trên thế giới của bạn (như *"**${cleanPrompt}**"*), bạn chỉ cần **kích hoạt mã khóa Gemini API miễn phí**:\n\n` +
+    `1. Nhìn lên góc trên bên phải, bấm vào nút màu tím **\`🔑 Kích hoạt Gemini 1.5\`**.\n` +
+    `2. Lấy mã miễn phí tại [Google AI Studio](https://aistudio.google.com/app/apikey) trong 30 giây (không cần thẻ ngân hàng).\n` +
+    `3. Dán mã \`AIzaSy...\` vào và bấm **Lưu & Kích hoạt ngay**!\n\n` +
+    `Sau khi kích hoạt, tôi sẽ lập tức giải đáp toàn bộ các câu hỏi toán học, lập trình, khoa học và đời sống của bạn 100% siêu thông minh!`;
+
+  return await streamTextGradually(keyNotice, onChunk, 6);
 }
