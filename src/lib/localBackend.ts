@@ -623,6 +623,27 @@ export function createLocalBackendMiddleware() {
       return;
     }
 
+    // 7.2 Add Members to Group
+    if (path === '/conversations/group/add-members' && req.method === 'POST') {
+      const body = await parseBody(req);
+      const { conversationId, newMemberIds } = body;
+      const conv = conversations.get(conversationId);
+      if (conv && conv.is_group && Array.isArray(newMemberIds)) {
+        newMemberIds.forEach((mId) => {
+          if (!conv.members.includes(mId)) {
+            conv.members.push(mId);
+          }
+        });
+        saveDatabase();
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ success: true, members: conv.members }));
+        return;
+      }
+      res.writeHead(400, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'Không tìm thấy nhóm hoặc dữ liệu không hợp lệ' }));
+      return;
+    }
+
     // 8. Get Messages
     if (path === '/messages' && req.method === 'GET') {
       const convId = url.searchParams.get('convId') || '';

@@ -662,6 +662,54 @@ export const ChatLayout: React.FC = () => {
     }
   };
 
+  // Thêm thành viên vào nhóm hiện tại
+  const handleAddMembersToGroup = async (convId: string, newMemberIds: string[]) => {
+    const targetGroup = conversations.find((c) => c.id === convId);
+    if (!targetGroup) return;
+
+    const newMembersData = friends.filter((f) => newMemberIds.includes(f.id));
+    const addedMembersList = newMembersData.map((f) => ({
+      id: 'm-' + f.id,
+      conversation_id: convId,
+      user_id: f.id,
+      role: 'member' as const,
+      profile: f,
+    }));
+
+    setConversations((prev) =>
+      prev.map((c) => {
+        if (c.id === convId) {
+          const currentMembers = c.members || [];
+          return {
+            ...c,
+            members: [...currentMembers, ...addedMembersList],
+          };
+        }
+        return c;
+      })
+    );
+
+    // Gửi thông báo hệ thống vào cuộc trò chuyện
+    const names = newMembersData.map((f) => f.display_name).join(', ');
+    await handleSendMessage(`${names} đã được thêm vào nhóm.`, null, undefined, 'system', convId);
+
+    if (!isSupabaseConfigured) {
+      try {
+        await fetch('/api/local/conversations/group/add-members', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            conversationId: convId,
+            newMemberIds,
+          }),
+        });
+        await syncFriendsAndConvs();
+      } catch (err) {
+        console.error('Lỗi cập nhật thành viên nhóm:', err);
+      }
+    }
+  };
+
   return (
     <div className="h-[100dvh] w-screen flex flex-col md:flex-row bg-slate-100 dark:bg-slate-900 overflow-hidden font-sans">
       
@@ -765,8 +813,10 @@ export const ChatLayout: React.FC = () => {
                       conversation={activeConversation}
                       messages={currentMessages}
                       currentUserId={profile?.id || ''}
+                      friends={friends}
                       onSendMessage={handleSendMessage}
                       onRevokeMessage={handleRevokeMessage}
+                      onAddMembers={handleAddMembersToGroup}
                       onStartCall={handleStartCall}
                       isOtherTyping={isOtherTyping}
                       isOnline={

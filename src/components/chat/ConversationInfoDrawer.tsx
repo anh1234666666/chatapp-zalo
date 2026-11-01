@@ -5,6 +5,7 @@ import {
   BellOff,
   Pin,
   Users,
+  UserPlus,
   Clock,
   ChevronDown,
   ChevronUp,
@@ -13,6 +14,7 @@ import {
   CheckCircle2,
   Trash2,
   Search,
+  Check,
 } from 'lucide-react';
 import { Conversation, Message, Profile } from '../../types/database';
 import { format } from 'date-fns';
@@ -22,8 +24,10 @@ interface ConversationInfoDrawerProps {
   onClose: () => void;
   conversation: Conversation;
   messages: Message[];
+  friends?: Profile[];
   onOpenProfile: (user: Profile) => void;
   onCreateGroup?: () => void;
+  onAddMembers?: (newMemberIds: string[]) => Promise<void>;
   onViewImage: (url: string) => void;
 }
 
@@ -32,8 +36,10 @@ export const ConversationInfoDrawer: React.FC<ConversationInfoDrawerProps> = ({
   onClose,
   conversation,
   messages,
+  friends = [],
   onOpenProfile,
   onCreateGroup,
+  onAddMembers,
   onViewImage,
 }) => {
   const [isMuted, setIsMuted] = useState(false);
@@ -42,6 +48,9 @@ export const ConversationInfoDrawer: React.FC<ConversationInfoDrawerProps> = ({
   const [isFileOpen, setIsFileOpen] = useState(true);
   const [showAllMedia, setShowAllMedia] = useState(false);
   const [isMembersOpen, setIsMembersOpen] = useState(true);
+  const [showAddMemberModal, setShowAddMemberModal] = useState(false);
+  const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([]);
+  const [isAddingMembers, setIsAddingMembers] = useState(false);
 
   if (!isOpen) return null;
 
@@ -252,6 +261,20 @@ export const ConversationInfoDrawer: React.FC<ConversationInfoDrawerProps> = ({
 
             {isMembersOpen && (
               <div className="mt-3 space-y-2.5">
+                {/* Nút Thêm thành viên chuẩn Zalo */}
+                {onAddMembers && (
+                  <button
+                    onClick={() => {
+                      setSelectedFriendIds([]);
+                      setShowAddMemberModal(true);
+                    }}
+                    className="w-full py-2 px-3 rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400 text-xs font-bold flex items-center justify-center gap-2 transition-colors mb-2"
+                  >
+                    <UserPlus className="w-4 h-4" />
+                    <span>Thêm thành viên vào nhóm</span>
+                  </button>
+                )}
+
                 {(conversation.members || []).map((m, idx) => {
                   const mProfile = m.profile;
                   const mName = mProfile?.display_name || m.nickname || 'Thành viên ' + (idx + 1);
@@ -392,6 +415,112 @@ export const ConversationInfoDrawer: React.FC<ConversationInfoDrawerProps> = ({
         </div>
 
       </div>
+
+      {/* Modal Thêm Thành Viên Vào Nhóm */}
+      {showAddMemberModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 p-5">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h4 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <UserPlus className="w-4 h-4 text-blue-600" />
+                <span>Thêm bạn bè vào nhóm</span>
+              </h4>
+              <button
+                onClick={() => setShowAddMemberModal(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Danh sách bạn bè chưa có trong nhóm */}
+            <div className="py-3 max-h-60 overflow-y-auto space-y-2">
+              {(() => {
+                const existingUserIds = new Set((conversation.members || []).map((m) => m.user_id));
+                const availableFriends = friends.filter((f) => !existingUserIds.has(f.id));
+
+                if (availableFriends.length === 0) {
+                  return (
+                    <p className="text-xs text-slate-400 text-center py-6">
+                      Tất cả bạn bè trong danh bạ đã có mặt trong nhóm này.
+                    </p>
+                  );
+                }
+
+                return availableFriends.map((friend) => {
+                  const isSelected = selectedFriendIds.includes(friend.id);
+                  return (
+                    <div
+                      key={friend.id}
+                      onClick={() => {
+                        setSelectedFriendIds((prev) =>
+                          isSelected ? prev.filter((id) => id !== friend.id) : [...prev, friend.id]
+                        );
+                      }}
+                      className={`flex items-center justify-between p-2.5 rounded-xl border cursor-pointer transition-all ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-50/70 dark:bg-blue-950/40 text-blue-900 dark:text-blue-100'
+                          : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800/60 text-slate-800 dark:text-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <img
+                          src={friend.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${friend.username}`}
+                          alt={friend.display_name}
+                          className="w-8 h-8 rounded-full object-cover shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold truncate">{friend.display_name}</p>
+                          <p className="text-[10px] text-slate-400">@{friend.username}</p>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${
+                          isSelected
+                            ? 'bg-blue-600 border-blue-600 text-white'
+                            : 'border-slate-300 dark:border-slate-600'
+                        }`}
+                      >
+                        {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+
+            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowAddMemberModal(false)}
+                className="flex-1 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={selectedFriendIds.length === 0 || isAddingMembers}
+                onClick={async () => {
+                  if (onAddMembers && selectedFriendIds.length > 0) {
+                    setIsAddingMembers(true);
+                    try {
+                      await onAddMembers(selectedFriendIds);
+                      setShowAddMemberModal(false);
+                      setSelectedFriendIds([]);
+                    } finally {
+                      setIsAddingMembers(false);
+                    }
+                  }
+                }}
+                className="flex-1 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-xs font-bold transition-all shadow-sm"
+              >
+                {isAddingMembers ? 'Đang thêm...' : `Xác nhận (${selectedFriendIds.length})`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -24,8 +24,10 @@ interface ChatAreaProps {
   conversation: Conversation;
   messages: Message[];
   currentUserId: string;
+  friends?: Profile[];
   onSendMessage: (content: string, replyToId?: string | null, attachments?: File[]) => Promise<void>;
   onRevokeMessage: (msgId: string) => Promise<void>;
+  onAddMembers?: (convId: string, newMemberIds: string[]) => Promise<void>;
   onStartCall: (type: 'audio' | 'video') => void;
   isOtherTyping?: boolean;
   onTyping?: () => void;
@@ -36,8 +38,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
   conversation,
   messages,
   currentUserId,
+  friends = [],
   onSendMessage,
   onRevokeMessage,
+  onAddMembers,
   onStartCall,
   isOtherTyping = false,
   onTyping,
@@ -562,7 +566,15 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         onClose={() => setShowInfoDrawer(false)}
         conversation={conversation}
         messages={messages}
+        friends={friends}
         onOpenProfile={(u) => setProfileUser(u)}
+        onAddMembers={
+          onAddMembers && conversation.is_group
+            ? async (newMemberIds) => {
+                await onAddMembers(conversation.id, newMemberIds);
+              }
+            : undefined
+        }
         onViewImage={(url) => setLightboxImage(url)}
       />
 
