@@ -616,12 +616,13 @@ export const ChatLayout: React.FC = () => {
   const handleCreateGroup = async (name: string, selectedFriendIds: string[]) => {
     const newGroupId = 'group-' + Date.now();
     const groupMembers = friends.filter((f) => selectedFriendIds.includes(f.id));
+    const allMemberIds = [profile?.id || 'me', ...selectedFriendIds];
     
     const newGroupConv: Conversation = {
       id: newGroupId,
       is_group: true,
       name,
-      avatar_url: `https://api.dicebear.com/7.x/identicon/svg?seed=${name}`,
+      avatar_url: `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(name)}`,
       last_message_preview: 'Nhóm vừa được tạo.',
       last_message_at: new Date().toISOString(),
       unread_count: 0,
@@ -641,6 +642,24 @@ export const ChatLayout: React.FC = () => {
     setActiveConversationId(newGroupId);
     setMobileViewingChat(true);
     setActiveTab('messages');
+
+    if (!isSupabaseConfigured) {
+      try {
+        await fetch('/api/local/conversations/group', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: newGroupId,
+            name,
+            members: allMemberIds,
+            avatar_url: newGroupConv.avatar_url,
+          }),
+        });
+        await syncFriendsAndConvs();
+      } catch (err) {
+        console.error('Lỗi lưu nhóm lên server:', err);
+      }
+    }
   };
 
   return (

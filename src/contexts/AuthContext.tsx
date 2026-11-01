@@ -203,7 +203,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, pass: string) => {
     if (!isSupabaseConfigured) {
-      // Cho phép đăng nhập nhanh bằng username/email
+      // Cho phép đăng nhập bằng username hoặc số điện thoại hoặc email
       const usernameCandidate = email.includes('@') ? email.split('@')[0] : email;
       const res = await fetch('/api/local/auth/register', {
         method: 'POST',

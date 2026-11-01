@@ -149,9 +149,9 @@ export const MessageItem: React.FC<MessageItemProps> = ({
         {/* Message Bubble Container */}
         <div className="relative group/bubble">
           
-          {/* Action buttons on hover (Reply, Revoke) */}
+          {/* Action buttons (Reply, Revoke): Luôn hiển thị trên Mobile với opacity-70, hover 100% trên Desktop chuẩn Zalo */}
           <div
-            className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover/bubble:opacity-100 transition-opacity flex items-center gap-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-1 shadow-md z-10 ${
+            className={`absolute top-1/2 -translate-y-1/2 opacity-70 sm:opacity-0 group-hover/bubble:opacity-100 transition-opacity flex items-center gap-1 bg-white/95 dark:bg-slate-800/95 backdrop-blur-xs border border-slate-200 dark:border-slate-700 rounded-lg p-1 shadow-md z-10 ${
               isSelf ? '-left-20' : '-right-20'
             }`}
           >
@@ -164,8 +164,12 @@ export const MessageItem: React.FC<MessageItemProps> = ({
             </button>
             {isSelf && !message.is_revoked && (
               <button
-                onClick={() => onRevoke(message.id)}
-                className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded text-slate-500 hover:text-red-600 transition-colors"
+                onClick={() => {
+                  if (window.confirm('Bạn có chắc chắn muốn thu hồi tin nhắn này không?')) {
+                    onRevoke(message.id);
+                  }
+                }}
+                className="p-1 hover:bg-red-50 dark:hover:bg-red-950/50 rounded text-slate-500 hover:text-red-600 transition-colors"
                 title="Thu hồi tin nhắn"
               >
                 <Undo2 className="w-3.5 h-3.5" />

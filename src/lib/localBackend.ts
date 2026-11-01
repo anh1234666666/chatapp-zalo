@@ -566,16 +566,60 @@ export function createLocalBackendMiddleware() {
         .map((c) => {
           const otherId = c.members.find((m) => m !== userId);
           const otherUser = otherId ? users.get(otherId) : null;
+          
+          // Trả về danh sách chi tiết các thành viên đầy đủ thông tin (cho cả nhóm và cá nhân)
+          const membersList = (c.members || []).map((mId, index) => {
+            const u = users.get(mId);
+            return {
+              id: 'm-' + mId,
+              conversation_id: c.id,
+              user_id: mId,
+              role: (index === 0 ? 'owner' : 'member') as 'owner' | 'admin' | 'member',
+              profile: u || {
+                id: mId,
+                username: 'user',
+                display_name: 'Thành viên ' + (index + 1),
+                avatar_url: `https://api.dicebear.com/7.x/bottts/svg?seed=${mId}`,
+                is_online: false,
+              },
+            };
+          });
+
           return {
             ...c,
             other_user: otherUser,
             unread_count: 0,
+            members: membersList,
           };
         })
         .sort((a, b) => new Date(b.last_message_at || 0).getTime() - new Date(a.last_message_at || 0).getTime());
 
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ conversations: userConvs }));
+      return;
+    }
+
+    // 7.1 Create Group Conversation
+    if (path === '/conversations/group' && req.method === 'POST') {
+      const body = await parseBody(req);
+      const { id, name, members, avatar_url } = body;
+      const groupId = id || 'group-' + Date.now();
+      const newGroup: ConversationStore = {
+        id: groupId,
+        name: name || 'Nhóm trò chuyện',
+        avatar_url: avatar_url || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(name || 'group')}`,
+        is_group: true,
+        members: members || [],
+        last_message_preview: 'Nhóm vừa được tạo.',
+        last_message_at: new Date().toISOString(),
+      };
+
+      conversations.set(groupId, newGroup);
+      messages.set(groupId, []);
+      saveDatabase();
+
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ success: true, conversation: newGroup }));
       return;
     }
 

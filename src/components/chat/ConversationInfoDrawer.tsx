@@ -41,6 +41,7 @@ export const ConversationInfoDrawer: React.FC<ConversationInfoDrawerProps> = ({
   const [isMediaOpen, setIsMediaOpen] = useState(true);
   const [isFileOpen, setIsFileOpen] = useState(true);
   const [showAllMedia, setShowAllMedia] = useState(false);
+  const [isMembersOpen, setIsMembersOpen] = useState(true);
 
   if (!isOpen) return null;
 
@@ -215,7 +216,7 @@ export const ConversationInfoDrawer: React.FC<ConversationInfoDrawerProps> = ({
         </div>
 
         {/* Danh sách nhắc hẹn & Nhóm chung chuẩn Zalo (Hình 3) */}
-        <div className="py-2">
+        <div className="py-2 border-b border-slate-100 dark:border-slate-800">
           <div className="px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors">
             <Clock className="w-5 h-5 text-slate-500" />
             <span className="text-sm font-medium text-slate-800 dark:text-slate-200 flex-1">
@@ -223,13 +224,75 @@ export const ConversationInfoDrawer: React.FC<ConversationInfoDrawerProps> = ({
             </span>
           </div>
 
-          <div className="px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors">
-            <Users className="w-5 h-5 text-slate-500" />
-            <span className="text-sm font-medium text-slate-800 dark:text-slate-200 flex-1">
-              {conversation.is_group ? `${conversation.members?.length || 2} thành viên` : '1 nhóm chung'}
-            </span>
-          </div>
+          {!conversation.is_group && (
+            <div className="px-4 py-3 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors">
+              <Users className="w-5 h-5 text-slate-500" />
+              <span className="text-sm font-medium text-slate-800 dark:text-slate-200 flex-1">
+                1 nhóm chung
+              </span>
+            </div>
+          )}
         </div>
+
+        {/* DANH SÁCH THÀNH VIÊN NHÓM CHUẨN ZALO (Nếu là nhóm trò chuyện) */}
+        {conversation.is_group && (
+          <div className="p-4 border-b border-slate-100 dark:border-slate-800">
+            <div
+              onClick={() => setIsMembersOpen(!isMembersOpen)}
+              className="flex items-center justify-between cursor-pointer py-1 select-none"
+            >
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-blue-600" />
+                <h5 className="font-bold text-sm text-slate-900 dark:text-white">
+                  Thành viên nhóm ({conversation.members?.length || 0})
+                </h5>
+              </div>
+              {isMembersOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+            </div>
+
+            {isMembersOpen && (
+              <div className="mt-3 space-y-2.5">
+                {(conversation.members || []).map((m, idx) => {
+                  const mProfile = m.profile;
+                  const mName = mProfile?.display_name || m.nickname || 'Thành viên ' + (idx + 1);
+                  const mAvatar = mProfile?.avatar_url || `https://api.dicebear.com/7.x/bottts/svg?seed=${m.user_id || idx}`;
+                  const isOwner = m.role === 'owner' || idx === 0;
+
+                  return (
+                    <div
+                      key={m.id || idx}
+                      onClick={() => mProfile && onOpenProfile(mProfile)}
+                      className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="relative w-9 h-9 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0">
+                          <img src={mAvatar} alt={mName} className="w-full h-full object-cover" />
+                          {mProfile?.is_online && (
+                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">
+                            {mName}
+                          </p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                            {isOwner ? 'Trưởng nhóm' : 'Thành viên'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {isOwner && (
+                        <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400 text-[10px] font-bold shrink-0">
+                          Trưởng nhóm
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Mục Ảnh/Video chuẩn Zalo (Hình 3) */}
         <div className="p-4">
