@@ -132,7 +132,8 @@ export const ChatLayout: React.FC = () => {
       const data = await res.json();
       if (!data.messages) return;
 
-      const newHash = data.messages.length + ':' + (data.messages[data.messages.length - 1]?.id || '');
+      // Hash bao gồm cả độ dài, ID cuối và trạng thái thu hồi của các tin nhắn
+      const newHash = data.messages.map((m: any) => `${m.id}:${m.is_revoked}`).join(',');
       if (newHash !== lastMsgHashRef.current[convId]) {
         lastMsgHashRef.current[convId] = newHash;
         setMessagesMap((prev) => ({
@@ -224,6 +225,18 @@ export const ChatLayout: React.FC = () => {
               : c
           )
         );
+      });
+
+      // Lắng nghe sự kiện thu hồi tin nhắn thời gian thực (Realtime Revoke)
+      eventSource.addEventListener('message_revoked', (e) => {
+        const { messageId, conversationId } = JSON.parse(e.data);
+        setMessagesMap((prev) => ({
+          ...prev,
+          [conversationId]: (prev[conversationId] || []).map((m) =>
+            m.id === messageId ? { ...m, is_revoked: true, content: '' } : m
+          ),
+        }));
+        lastMsgHashRef.current[conversationId] = 'sse-revoked-' + Date.now();
       });
 
       eventSource.addEventListener('friend_request_received', () => {
